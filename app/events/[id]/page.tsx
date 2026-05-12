@@ -5,11 +5,7 @@ import Link from 'next/link'
 import { supabase } from '../../../lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
 
-document.querySelectorAll('input[type="number"]').forEach(el => {
-  el.type = 'text';
-  el.onfocus = function() { this.type = 'number'; };
-  el.onblur = function() { if (this.value === "") this.type = 'text'; };
-});
+
 
 export default function EventDetailPage() {
   const params = useParams()
@@ -77,6 +73,16 @@ const [checkingAuth, setCheckingAuth] = useState(true)
   const [scheduleForm, setScheduleForm] = useState(emptyScheduleForm)
   const [productionForm, setProductionForm] = useState(emptyProductionForm)
   const [serviceForm, setServiceForm] = useState(emptyServiceForm)
+
+const [cost, setCost] = useState("");
+
+<input
+  className="Input"
+  type="number"
+  placeholder="Estimated cost"
+  value={cost} 
+  onChange={(e) => setCost(e.target.value)}
+/>
 
   async function loadAll() {
     if (!eventId) return
