@@ -7,6 +7,8 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { supabase } from '../../lib/supabase'
+import Sidebar from '../../components/Sidebar'
+
 
 export default function CalendarPage() {
   const [calendarEvents, setCalendarEvents] = useState<any[]>([])
@@ -43,7 +45,11 @@ export default function CalendarPage() {
   }, [])
 
   return (
-    <main className="min-h-screen bg-slate-100 p-8 text-slate-950">
+ <main className="min-h-screen bg-slate-100 text-slate-950 lg:flex">
+  <Sidebar />
+
+  <div className="flex-1 p-8">
+
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex flex-col lg:flex-row lg:items-start justify-between gap-6">
           <div>
@@ -86,6 +92,7 @@ export default function CalendarPage() {
           )}
         </div>
       </div>
+     </div>
     </main>
   )
 }

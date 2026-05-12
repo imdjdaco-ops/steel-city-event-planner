@@ -6,6 +6,9 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 
+import Sidebar from '../../../components/Sidebar'
+
+
 export default function EventDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -438,7 +441,11 @@ export default function EventDetailPage() {
   if (!event) return <main className="min-h-screen bg-slate-100 p-8">Event not found.</main>
 
   return (
-    <main className="min-h-screen bg-slate-100 p-8 text-slate-950">
+   <main className="min-h-screen bg-slate-100 text-slate-950 lg:flex">
+  <Sidebar />
+
+  <div className="flex-1 p-8">
+
       <div className="max-w-6xl mx-auto space-y-8">
         <Link href="/" className="text-slate-600 hover:text-slate-950">
           ← Back to dashboard
@@ -844,6 +851,7 @@ export default function EventDetailPage() {
           }
         }
       `}</style>
+ </div>
     </main>
   )
 }

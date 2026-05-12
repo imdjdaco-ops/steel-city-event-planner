@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
 
+import Sidebar from '../../components/Sidebar'
+
+
 type Event = {
   id: string
   name: string
@@ -79,7 +82,11 @@ if (checkingAuth) {
 }
 
   return (
-    <main className="min-h-screen bg-slate-100 p-8 text-slate-950">
+<main className="min-h-screen bg-slate-100 text-slate-950 lg:flex">
+  <Sidebar />
+
+  <div className="flex-1 p-8">
+
       <div className="max-w-6xl mx-auto">
         <div className="mb-10 flex items-start justify-between gap-6">
           <div>
@@ -157,6 +164,7 @@ if (checkingAuth) {
           </div>
         )}
       </div>
+  </div>
     </main>
   )
 }
