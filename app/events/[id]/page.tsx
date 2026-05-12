@@ -74,15 +74,7 @@ const [checkingAuth, setCheckingAuth] = useState(true)
   const [productionForm, setProductionForm] = useState(emptyProductionForm)
   const [serviceForm, setServiceForm] = useState(emptyServiceForm)
 
-const [cost, setCost] = useState("");
 
-<input
-  className="Input"
-  type="number"
-  placeholder="Estimated cost"
-  value={cost} 
-  onChange={(e) => setCost(e.target.value)}
-/>
 
   async function loadAll() {
     if (!eventId) return
