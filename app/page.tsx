@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
+import Sidebar from '../components/Sidebar'
+
 
 type Event = {
   id: string
@@ -168,7 +170,11 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 p-8 text-slate-950">
+    <main className="min-h-screen bg-slate-100 text-slate-950 lg:flex">
+  <Sidebar />
+
+  <div className="flex-1 p-8">
+
       <div className="max-w-6xl mx-auto">
         <div className="mb-10 flex flex-col lg:flex-row lg:items-start justify-between gap-6">
           <div>
@@ -374,6 +380,8 @@ export default function HomePage() {
           </div>
         )}
       </div>
-    </main>
+   </div>
+</main>
+
   )
 }
