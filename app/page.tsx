@@ -197,6 +197,15 @@ export default function HomePage() {
               Archived
             </Link>
 
+
+<Link
+  href="/calendar"
+  className="border border-slate-300 text-slate-900 rounded-2xl px-5 py-3 font-semibold hover:bg-white"
+>
+  Calendar
+</Link>
+
+
             <button
               onClick={() => setShowForm(!showForm)}
               className="bg-slate-950 text-white rounded-2xl px-5 py-3 font-semibold hover:bg-slate-800"
