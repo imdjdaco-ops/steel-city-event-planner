@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -410,21 +411,10 @@ export default function EventDetailPage() {
     loadAll()
   }
 
-  const budgetEstimatedIncome = budgetItems
-    .filter((item) => item.item_type === 'income')
-    .reduce((sum, item) => sum + Number(item.estimated_amount || 0), 0)
-
-  const budgetEstimatedExpenses = budgetItems
-    .filter((item) => item.item_type === 'expense')
-    .reduce((sum, item) => sum + Number(item.estimated_amount || 0), 0)
-
-  const budgetActualIncome = budgetItems
-    .filter((item) => item.item_type === 'income')
-    .reduce((sum, item) => sum + Number(item.actual_amount || 0), 0)
-
-  const budgetActualExpenses = budgetItems
-    .filter((item) => item.item_type === 'expense')
-    .reduce((sum, item) => sum + Number(item.actual_amount || 0), 0)
+  const budgetEstimatedIncome = budgetItems.filter((item) => item.item_type === 'income').reduce((sum, item) => sum + Number(item.estimated_amount || 0), 0)
+  const budgetEstimatedExpenses = budgetItems.filter((item) => item.item_type === 'expense').reduce((sum, item) => sum + Number(item.estimated_amount || 0), 0)
+  const budgetActualIncome = budgetItems.filter((item) => item.item_type === 'income').reduce((sum, item) => sum + Number(item.actual_amount || 0), 0)
+  const budgetActualExpenses = budgetItems.filter((item) => item.item_type === 'expense').reduce((sum, item) => sum + Number(item.actual_amount || 0), 0)
 
   const productionEstimated = productionItems.reduce((sum, item) => sum + Number(item.estimated_cost || 0), 0)
   const productionActual = productionItems.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0)
@@ -434,13 +424,9 @@ export default function EventDetailPage() {
 
   const totalEstimatedCosts = budgetEstimatedExpenses + productionEstimated + servicesEstimated
   const totalActualCosts = budgetActualExpenses + productionActual + servicesActual
-
   const projectedProfit = budgetEstimatedIncome - totalEstimatedCosts
   const actualProfit = budgetActualIncome - totalActualCosts
-
-  const breakEvenAttendees =
-    averageTicketPrice > 0 ? Math.ceil(totalEstimatedCosts / averageTicketPrice) : 0
-
+  const breakEvenAttendees = averageTicketPrice > 0 ? Math.ceil(totalEstimatedCosts / averageTicketPrice) : 0
   const projectedRevenueAtGoal = Number(event?.attendance_goal || 0) * averageTicketPrice
   const projectedProfitAtGoal = projectedRevenueAtGoal - totalEstimatedCosts
 
@@ -460,14 +446,8 @@ export default function EventDetailPage() {
 
         <section className="bg-slate-950 text-white rounded-3xl p-8">
           <div className="flex justify-between gap-4">
-            <span className="bg-white/10 text-amber-200 text-xs font-semibold px-3 py-1 rounded-full">
-              {event.status}
-            </span>
-
-            <button
-              onClick={() => setEditing(!editing)}
-              className="bg-white text-slate-950 rounded-2xl px-4 py-2 font-semibold"
-            >
+            <span className="bg-white/10 text-amber-200 text-xs font-semibold px-3 py-1 rounded-full">{event.status}</span>
+            <button onClick={() => setEditing(!editing)} className="bg-white text-slate-950 rounded-2xl px-4 py-2 font-semibold">
               {editing ? 'Cancel' : 'Edit Event'}
             </button>
           </div>
@@ -479,22 +459,26 @@ export default function EventDetailPage() {
 
         {editing && form && (
           <form onSubmit={saveEvent} className="FormGrid">
-            <input className="Input" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Event name" />
-            <input className="Input" value={form.event_type || ''} onChange={(e) => setForm({ ...form, event_type: e.target.value })} placeholder="Event type" />
-            <input className="Input" type="date" value={form.start_date || ''} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
-            <input className="Input" type="date" value={form.end_date || ''} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
-            <input className="Input" type="number" value={form.attendance_goal || 0} onChange={(e) => setForm({ ...form, attendance_goal: Number(e.target.value) })} />
-            <input className="Input" type="number" value={form.revenue_goal || 0} onChange={(e) => setForm({ ...form, revenue_goal: Number(e.target.value) })} />
+            <Field label="Event Name"><input className="Input" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
+            <Field label="Event Type"><input className="Input" value={form.event_type || ''} onChange={(e) => setForm({ ...form, event_type: e.target.value })} /></Field>
+            <Field label="Start Date"><input className="Input" type="date" value={form.start_date || ''} onChange={(e) => setForm({ ...form, start_date: e.target.value })} /></Field>
+            <Field label="End Date"><input className="Input" type="date" value={form.end_date || ''} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></Field>
+            <Field label="Attendance Goal"><input className="Input" type="number" value={form.attendance_goal || 0} onChange={(e) => setForm({ ...form, attendance_goal: Number(e.target.value) })} /></Field>
+            <Field label="Revenue Goal"><input className="Input" type="number" value={form.revenue_goal || 0} onChange={(e) => setForm({ ...form, revenue_goal: Number(e.target.value) })} /></Field>
 
-            <select className="Input" value={form.status || 'Planning'} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-              <option>Idea</option>
-              <option>Planning</option>
-              <option>Active</option>
-              <option>Completed</option>
-              <option>Archived</option>
-            </select>
+            <Field label="Status">
+              <select className="Input" value={form.status || 'Planning'} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                <option>Idea</option>
+                <option>Planning</option>
+                <option>Active</option>
+                <option>Completed</option>
+                <option>Archived</option>
+              </select>
+            </Field>
 
-            <textarea className="Input md:col-span-2" value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" />
+            <Field label="Description" full>
+              <textarea className="Input" value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </Field>
 
             <button className="Button md:col-span-2">Save Changes</button>
           </form>
@@ -510,21 +494,13 @@ export default function EventDetailPage() {
         <section className="bg-amber-50 border border-amber-200 rounded-3xl p-6 space-y-5">
           <div>
             <h2 className="text-3xl font-bold">Budget Calculator</h2>
-            <p className="text-slate-600 mt-1">
-              Combines budget expenses, production costs, and vendor/service costs.
-            </p>
+            <p className="text-slate-600 mt-1">Combines budget expenses, production costs, and vendor/service costs.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-sm text-slate-600">Average Ticket Price</label>
-              <input
-                className="mt-2 w-full border rounded-xl p-3"
-                type="number"
-                value={averageTicketPrice}
-                onChange={(e) => setAverageTicketPrice(Number(e.target.value))}
-              />
-            </div>
+            <Field label="Average Ticket Price">
+              <input className="Input" type="number" value={averageTicketPrice} onChange={(e) => setAverageTicketPrice(Number(e.target.value))} />
+            </Field>
 
             <MiniStat label="Total Estimated Costs" value={`$${totalEstimatedCosts}`} />
             <MiniStat label="Break-Even Attendees" value={breakEvenAttendees} />
@@ -532,9 +508,7 @@ export default function EventDetailPage() {
           </div>
 
           <p className="text-sm text-slate-700">
-            At an average ticket price of <strong>${averageTicketPrice}</strong>, you need approximately{' '}
-            <strong>{breakEvenAttendees}</strong> attendees to cover about{' '}
-            <strong>${totalEstimatedCosts}</strong> in estimated event costs.
+            At an average ticket price of <strong>${averageTicketPrice}</strong>, you need approximately <strong>{breakEvenAttendees}</strong> attendees to cover about <strong>${totalEstimatedCosts}</strong> in estimated event costs.
           </p>
         </section>
 
@@ -549,40 +523,42 @@ export default function EventDetailPage() {
           }}
         />
 
+        {showBudgetForm && (
+          <form onSubmit={saveBudgetItem} className="FormGrid">
+            <Field label="Item Name"><input className="Input" value={budgetForm.name} onChange={(e) => setBudgetForm({ ...budgetForm, name: e.target.value })} required /></Field>
+            <Field label="Category"><input className="Input" value={budgetForm.category} onChange={(e) => setBudgetForm({ ...budgetForm, category: e.target.value })} /></Field>
+
+            <Field label="Item Type">
+              <select className="Input" value={budgetForm.item_type} onChange={(e) => setBudgetForm({ ...budgetForm, item_type: e.target.value })}>
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+            </Field>
+
+            <Field label="Status">
+              <select className="Input" value={budgetForm.status} onChange={(e) => setBudgetForm({ ...budgetForm, status: e.target.value })}>
+                <option value="planned">Planned</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="received">Received</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </Field>
+
+            <Field label="Estimated Amount"><input className="Input" type="number" value={budgetForm.estimated_amount} onChange={(e) => setBudgetForm({ ...budgetForm, estimated_amount: Number(e.target.value) })} /></Field>
+            <Field label="Actual Amount"><input className="Input" type="number" value={budgetForm.actual_amount} onChange={(e) => setBudgetForm({ ...budgetForm, actual_amount: Number(e.target.value) })} /></Field>
+            <Field label="Notes" full><textarea className="Input" value={budgetForm.notes} onChange={(e) => setBudgetForm({ ...budgetForm, notes: e.target.value })} /></Field>
+
+            <button className="Button md:col-span-2">{editingBudgetId ? 'Save Budget Changes' : 'Save Budget Item'}</button>
+          </form>
+        )}
+
         <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <MiniStat label="Budget Income" value={`$${budgetEstimatedIncome}`} />
           <MiniStat label="Budget Expenses" value={`$${budgetEstimatedExpenses}`} />
           <MiniStat label="Projected Profit" value={`$${projectedProfit}`} />
           <MiniStat label="Actual Profit" value={`$${actualProfit}`} />
         </section>
-
-        {showBudgetForm && (
-          <form onSubmit={saveBudgetItem} className="FormGrid">
-            <input className="Input" placeholder="Item name" value={budgetForm.name} onChange={(e) => setBudgetForm({ ...budgetForm, name: e.target.value })} required />
-            <input className="Input" placeholder="Category: Venue, Artists, Travel..." value={budgetForm.category} onChange={(e) => setBudgetForm({ ...budgetForm, category: e.target.value })} />
-
-            <select className="Input" value={budgetForm.item_type} onChange={(e) => setBudgetForm({ ...budgetForm, item_type: e.target.value })}>
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
-            </select>
-
-            <select className="Input" value={budgetForm.status} onChange={(e) => setBudgetForm({ ...budgetForm, status: e.target.value })}>
-              <option value="planned">Planned</option>
-              <option value="pending">Pending</option>
-              <option value="paid">Paid</option>
-              <option value="received">Received</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-
-            <input className="Input" type="number" placeholder="Estimated amount" value={budgetForm.estimated_amount} onChange={(e) => setBudgetForm({ ...budgetForm, estimated_amount: Number(e.target.value) })} />
-            <input className="Input" type="number" placeholder="Actual amount" value={budgetForm.actual_amount} onChange={(e) => setBudgetForm({ ...budgetForm, actual_amount: Number(e.target.value) })} />
-            <textarea className="Input md:col-span-2" placeholder="Notes" value={budgetForm.notes} onChange={(e) => setBudgetForm({ ...budgetForm, notes: e.target.value })} />
-
-            <button className="Button md:col-span-2">
-              {editingBudgetId ? 'Save Budget Changes' : 'Save Budget Item'}
-            </button>
-          </form>
-        )}
 
         <CardList>
           {budgetItems.map((item) => (
@@ -612,29 +588,31 @@ export default function EventDetailPage() {
 
         {showTaskForm && (
           <form onSubmit={saveTask} className="FormGrid">
-            <input className="Input" placeholder="Task title" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} required />
-            <input className="Input" placeholder="Category" value={taskForm.category} onChange={(e) => setTaskForm({ ...taskForm, category: e.target.value })} />
+            <Field label="Task Title"><input className="Input" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} required /></Field>
+            <Field label="Category"><input className="Input" value={taskForm.category} onChange={(e) => setTaskForm({ ...taskForm, category: e.target.value })} /></Field>
 
-            <select className="Input" value={taskForm.status} onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value })}>
-              <option>Not Started</option>
-              <option>In Progress</option>
-              <option>Done</option>
-              <option>Blocked</option>
-            </select>
+            <Field label="Status">
+              <select className="Input" value={taskForm.status} onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value })}>
+                <option>Not Started</option>
+                <option>In Progress</option>
+                <option>Done</option>
+                <option>Blocked</option>
+              </select>
+            </Field>
 
-            <select className="Input" value={taskForm.priority} onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}>
-              <option>Low</option>
-              <option>Medium</option>
-              <option>High</option>
-            </select>
+            <Field label="Priority">
+              <select className="Input" value={taskForm.priority} onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}>
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+              </select>
+            </Field>
 
-            <input className="Input" type="date" value={taskForm.due_date} onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })} />
-            <input className="Input" placeholder="Assigned to" value={taskForm.assigned_to} onChange={(e) => setTaskForm({ ...taskForm, assigned_to: e.target.value })} />
-            <textarea className="Input md:col-span-2" placeholder="Notes" value={taskForm.notes} onChange={(e) => setTaskForm({ ...taskForm, notes: e.target.value })} />
+            <Field label="Due Date"><input className="Input" type="date" value={taskForm.due_date} onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })} /></Field>
+            <Field label="Assigned To"><input className="Input" value={taskForm.assigned_to} onChange={(e) => setTaskForm({ ...taskForm, assigned_to: e.target.value })} /></Field>
+            <Field label="Notes" full><textarea className="Input" value={taskForm.notes} onChange={(e) => setTaskForm({ ...taskForm, notes: e.target.value })} /></Field>
 
-            <button className="Button md:col-span-2">
-              {editingTaskId ? 'Save Task Changes' : 'Save Task'}
-            </button>
+            <button className="Button md:col-span-2">{editingTaskId ? 'Save Task Changes' : 'Save Task'}</button>
           </form>
         )}
 
@@ -675,21 +653,26 @@ export default function EventDetailPage() {
 
         {showScheduleForm && (
           <form onSubmit={saveScheduleItem} className="FormGrid">
-            <input className="Input" placeholder="Title" value={scheduleForm.title} onChange={(e) => setScheduleForm({ ...scheduleForm, title: e.target.value })} required />
-            <select className="Input" value={scheduleForm.schedule_type} onChange={(e) => setScheduleForm({ ...scheduleForm, schedule_type: e.target.value })}>
-              <option>Workshop</option>
-              <option>Party</option>
-              <option>Setup</option>
-              <option>Soundcheck</option>
-              <option>Performance</option>
-              <option>Break</option>
-              <option>Doors Open</option>
-              <option>Cleanup</option>
-            </select>
-            <input className="Input" type="datetime-local" value={scheduleForm.start_time} onChange={(e) => setScheduleForm({ ...scheduleForm, start_time: e.target.value })} />
-            <input className="Input" type="datetime-local" value={scheduleForm.end_time} onChange={(e) => setScheduleForm({ ...scheduleForm, end_time: e.target.value })} />
-            <input className="Input" placeholder="Room / Floor" value={scheduleForm.room} onChange={(e) => setScheduleForm({ ...scheduleForm, room: e.target.value })} />
-            <textarea className="Input md:col-span-2" placeholder="Notes" value={scheduleForm.notes} onChange={(e) => setScheduleForm({ ...scheduleForm, notes: e.target.value })} />
+            <Field label="Title"><input className="Input" value={scheduleForm.title} onChange={(e) => setScheduleForm({ ...scheduleForm, title: e.target.value })} required /></Field>
+
+            <Field label="Schedule Type">
+              <select className="Input" value={scheduleForm.schedule_type} onChange={(e) => setScheduleForm({ ...scheduleForm, schedule_type: e.target.value })}>
+                <option>Workshop</option>
+                <option>Party</option>
+                <option>Setup</option>
+                <option>Soundcheck</option>
+                <option>Performance</option>
+                <option>Break</option>
+                <option>Doors Open</option>
+                <option>Cleanup</option>
+              </select>
+            </Field>
+
+            <Field label="Start Time"><input className="Input" type="datetime-local" value={scheduleForm.start_time} onChange={(e) => setScheduleForm({ ...scheduleForm, start_time: e.target.value })} /></Field>
+            <Field label="End Time"><input className="Input" type="datetime-local" value={scheduleForm.end_time} onChange={(e) => setScheduleForm({ ...scheduleForm, end_time: e.target.value })} /></Field>
+            <Field label="Room / Floor"><input className="Input" value={scheduleForm.room} onChange={(e) => setScheduleForm({ ...scheduleForm, room: e.target.value })} /></Field>
+            <Field label="Notes" full><textarea className="Input" value={scheduleForm.notes} onChange={(e) => setScheduleForm({ ...scheduleForm, notes: e.target.value })} /></Field>
+
             <button className="Button md:col-span-2">{editingScheduleId ? 'Save Schedule Changes' : 'Save Schedule Item'}</button>
           </form>
         )}
@@ -721,32 +704,43 @@ export default function EventDetailPage() {
 
         {showProductionForm && (
           <form onSubmit={saveProductionItem} className="FormGrid">
-            <input className="Input" placeholder="Item name" value={productionForm.name} onChange={(e) => setProductionForm({ ...productionForm, name: e.target.value })} required />
-            <input className="Input" placeholder="Category: Sound, Lighting, DJ Gear..." value={productionForm.category} onChange={(e) => setProductionForm({ ...productionForm, category: e.target.value })} />
-            <input className="Input" type="number" placeholder="Quantity" value={productionForm.quantity} onChange={(e) => setProductionForm({ ...productionForm, quantity: Number(e.target.value) })} />
-            <select className="Input" value={productionForm.status} onChange={(e) => setProductionForm({ ...productionForm, status: e.target.value })}>
-              <option>Needed</option>
-              <option>Confirmed</option>
-              <option>Packed</option>
-              <option>Delivered</option>
-              <option>Returned</option>
-              <option>Cancelled</option>
-            </select>
-            <select className="Input" value={productionForm.ownership_type} onChange={(e) => setProductionForm({ ...productionForm, ownership_type: e.target.value })}>
-              <option>Owned</option>
-              <option>Rental</option>
-              <option>Borrowed</option>
-              <option>Vendor</option>
-            </select>
-            <label className="flex items-center gap-3 border rounded-xl p-3 bg-white">
-              <input type="checkbox" checked={productionForm.rental_needed} onChange={(e) => setProductionForm({ ...productionForm, rental_needed: e.target.checked })} />
-              Rental needed?
-            </label>
-            <input className="Input" type="number" placeholder="Estimated cost" value={productionForm.estimated_cost} onChange={(e) => setProductionForm({ ...productionForm, estimated_cost: Number(e.target.value) })} />
-            <input className="Input" type="number" placeholder="Actual cost" value={productionForm.actual_cost} onChange={(e) => setProductionForm({ ...productionForm, actual_cost: Number(e.target.value) })} />
-            <input className="Input" placeholder="Vendor name" value={productionForm.vendor_name} onChange={(e) => setProductionForm({ ...productionForm, vendor_name: e.target.value })} />
-            <input className="Input" placeholder="Owner / Responsible person" value={productionForm.owner} onChange={(e) => setProductionForm({ ...productionForm, owner: e.target.value })} />
-            <textarea className="Input md:col-span-2" placeholder="Notes" value={productionForm.notes} onChange={(e) => setProductionForm({ ...productionForm, notes: e.target.value })} />
+            <Field label="Item Name"><input className="Input" value={productionForm.name} onChange={(e) => setProductionForm({ ...productionForm, name: e.target.value })} required /></Field>
+            <Field label="Category"><input className="Input" value={productionForm.category} onChange={(e) => setProductionForm({ ...productionForm, category: e.target.value })} /></Field>
+            <Field label="Quantity"><input className="Input" type="number" value={productionForm.quantity} onChange={(e) => setProductionForm({ ...productionForm, quantity: Number(e.target.value) })} /></Field>
+
+            <Field label="Status">
+              <select className="Input" value={productionForm.status} onChange={(e) => setProductionForm({ ...productionForm, status: e.target.value })}>
+                <option>Needed</option>
+                <option>Confirmed</option>
+                <option>Packed</option>
+                <option>Delivered</option>
+                <option>Returned</option>
+                <option>Cancelled</option>
+              </select>
+            </Field>
+
+            <Field label="Ownership Type">
+              <select className="Input" value={productionForm.ownership_type} onChange={(e) => setProductionForm({ ...productionForm, ownership_type: e.target.value })}>
+                <option>Owned</option>
+                <option>Rental</option>
+                <option>Borrowed</option>
+                <option>Vendor</option>
+              </select>
+            </Field>
+
+            <Field label="Rental Needed?">
+              <label className="flex items-center gap-3 border rounded-xl p-3 bg-white">
+                <input type="checkbox" checked={productionForm.rental_needed} onChange={(e) => setProductionForm({ ...productionForm, rental_needed: e.target.checked })} />
+                Yes, rental is needed
+              </label>
+            </Field>
+
+            <Field label="Estimated Cost"><input className="Input" type="number" value={productionForm.estimated_cost} onChange={(e) => setProductionForm({ ...productionForm, estimated_cost: Number(e.target.value) })} /></Field>
+            <Field label="Actual Cost"><input className="Input" type="number" value={productionForm.actual_cost} onChange={(e) => setProductionForm({ ...productionForm, actual_cost: Number(e.target.value) })} /></Field>
+            <Field label="Vendor Name"><input className="Input" value={productionForm.vendor_name} onChange={(e) => setProductionForm({ ...productionForm, vendor_name: e.target.value })} /></Field>
+            <Field label="Owner / Responsible Person"><input className="Input" value={productionForm.owner} onChange={(e) => setProductionForm({ ...productionForm, owner: e.target.value })} /></Field>
+            <Field label="Notes" full><textarea className="Input" value={productionForm.notes} onChange={(e) => setProductionForm({ ...productionForm, notes: e.target.value })} /></Field>
+
             <button className="Button md:col-span-2">{editingProductionId ? 'Save Production Changes' : 'Save Production Item'}</button>
           </form>
         )}
@@ -778,22 +772,27 @@ export default function EventDetailPage() {
 
         {showServiceForm && (
           <form onSubmit={saveService} className="FormGrid">
-            <input className="Input" placeholder="Service / Vendor name" value={serviceForm.name} onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} required />
-            <input className="Input" placeholder="Type: Food, Cash Bar, Photo..." value={serviceForm.service_type} onChange={(e) => setServiceForm({ ...serviceForm, service_type: e.target.value })} />
-            <input className="Input" placeholder="Contact name" value={serviceForm.contact_name} onChange={(e) => setServiceForm({ ...serviceForm, contact_name: e.target.value })} />
-            <input className="Input" placeholder="Contact email" value={serviceForm.contact_email} onChange={(e) => setServiceForm({ ...serviceForm, contact_email: e.target.value })} />
-            <input className="Input" placeholder="Contact phone" value={serviceForm.contact_phone} onChange={(e) => setServiceForm({ ...serviceForm, contact_phone: e.target.value })} />
-            <select className="Input" value={serviceForm.status} onChange={(e) => setServiceForm({ ...serviceForm, status: e.target.value })}>
-              <option>Needed</option>
-              <option>Contacted</option>
-              <option>Confirmed</option>
-              <option>Paid</option>
-              <option>Completed</option>
-              <option>Cancelled</option>
-            </select>
-            <input className="Input" type="number" placeholder="Estimated cost" value={serviceForm.estimated_cost} onChange={(e) => setServiceForm({ ...serviceForm, estimated_cost: Number(e.target.value) })} />
-            <input className="Input" type="number" placeholder="Actual cost" value={serviceForm.actual_cost} onChange={(e) => setServiceForm({ ...serviceForm, actual_cost: Number(e.target.value) })} />
-            <textarea className="Input md:col-span-2" placeholder="Notes" value={serviceForm.notes} onChange={(e) => setServiceForm({ ...serviceForm, notes: e.target.value })} />
+            <Field label="Service / Vendor Name"><input className="Input" value={serviceForm.name} onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} required /></Field>
+            <Field label="Service Type"><input className="Input" value={serviceForm.service_type} onChange={(e) => setServiceForm({ ...serviceForm, service_type: e.target.value })} /></Field>
+            <Field label="Contact Name"><input className="Input" value={serviceForm.contact_name} onChange={(e) => setServiceForm({ ...serviceForm, contact_name: e.target.value })} /></Field>
+            <Field label="Contact Email"><input className="Input" value={serviceForm.contact_email} onChange={(e) => setServiceForm({ ...serviceForm, contact_email: e.target.value })} /></Field>
+            <Field label="Contact Phone"><input className="Input" value={serviceForm.contact_phone} onChange={(e) => setServiceForm({ ...serviceForm, contact_phone: e.target.value })} /></Field>
+
+            <Field label="Status">
+              <select className="Input" value={serviceForm.status} onChange={(e) => setServiceForm({ ...serviceForm, status: e.target.value })}>
+                <option>Needed</option>
+                <option>Contacted</option>
+                <option>Confirmed</option>
+                <option>Paid</option>
+                <option>Completed</option>
+                <option>Cancelled</option>
+              </select>
+            </Field>
+
+            <Field label="Estimated Cost"><input className="Input" type="number" value={serviceForm.estimated_cost} onChange={(e) => setServiceForm({ ...serviceForm, estimated_cost: Number(e.target.value) })} /></Field>
+            <Field label="Actual Cost"><input className="Input" type="number" value={serviceForm.actual_cost} onChange={(e) => setServiceForm({ ...serviceForm, actual_cost: Number(e.target.value) })} /></Field>
+            <Field label="Notes" full><textarea className="Input" value={serviceForm.notes} onChange={(e) => setServiceForm({ ...serviceForm, notes: e.target.value })} /></Field>
+
             <button className="Button md:col-span-2">{editingServiceId ? 'Save Service Changes' : 'Save Service'}</button>
           </form>
         )}
@@ -814,6 +813,7 @@ export default function EventDetailPage() {
 
       <style jsx global>{`
         .Input {
+          width: 100%;
           border: 1px solid rgb(203 213 225);
           border-radius: 0.75rem;
           padding: 0.75rem;
@@ -848,6 +848,15 @@ export default function EventDetailPage() {
   )
 }
 
+function Field({ label, children, full = false }: { label: string; children: React.ReactNode; full?: boolean }) {
+  return (
+    <div className={full ? 'md:col-span-2' : ''}>
+      <label className="block text-sm font-semibold text-slate-600 mb-2">{label}</label>
+      {children}
+    </div>
+  )
+}
+
 function Stat({ label, value }: { label: string; value: any }) {
   return (
     <div className="bg-white rounded-3xl border border-slate-200 p-6">
@@ -866,17 +875,7 @@ function MiniStat({ label, value }: { label: string; value: any }) {
   )
 }
 
-function SectionHeader({
-  title,
-  subtitle,
-  button,
-  onClick,
-}: {
-  title: string
-  subtitle: string
-  button: string
-  onClick: () => void
-}) {
+function SectionHeader({ title, subtitle, button, onClick }: { title: string; subtitle: string; button: string; onClick: () => void }) {
   return (
     <section className="bg-white rounded-3xl border border-slate-200 p-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
