@@ -13,6 +13,7 @@ type Event = {
   start_date: string
   attendance_goal: number
   revenue_goal: number
+  order_index: number
 }
 
 export default function HomePage() {
@@ -33,6 +34,7 @@ export default function HomePage() {
     attendance_goal: 0,
     revenue_goal: 0,
     description: '',
+    order_index: 0,
   })
 
   async function fetchEvents() {
@@ -40,6 +42,7 @@ export default function HomePage() {
       .from('events')
       .select('*')
       .neq('status', 'Archived')
+      .order('order_index', { ascending: true })
       .order('start_date', { ascending: true })
 
     if (!error) {
@@ -69,7 +72,14 @@ export default function HomePage() {
   async function addEvent(e: React.FormEvent) {
     e.preventDefault()
 
-    const { error } = await supabase.from('events').insert([form])
+    const nextOrderIndex = events.length
+
+    const { error } = await supabase.from('events').insert([
+      {
+        ...form,
+        order_index: nextOrderIndex,
+      },
+    ])
 
     if (error) {
       alert('Error adding event')
@@ -88,6 +98,7 @@ export default function HomePage() {
       attendance_goal: 0,
       revenue_goal: 0,
       description: '',
+      order_index: 0,
     })
 
     fetchEvents()
@@ -114,6 +125,33 @@ export default function HomePage() {
     }
 
     fetchEvents()
+  }
+
+  async function moveEvent(index: number, direction: 'up' | 'down') {
+    const newEvents = [...events]
+    const targetIndex = direction === 'up' ? index - 1 : index + 1
+
+    if (targetIndex < 0 || targetIndex >= newEvents.length) return
+
+    const currentEvent = newEvents[index]
+    const targetEvent = newEvents[targetIndex]
+
+    newEvents[index] = targetEvent
+    newEvents[targetIndex] = currentEvent
+
+    const updatedEvents = newEvents.map((event, idx) => ({
+      ...event,
+      order_index: idx,
+    }))
+
+    setEvents(updatedEvents)
+
+    for (const event of updatedEvents) {
+      await supabase
+        .from('events')
+        .update({ order_index: event.order_index })
+        .eq('id', event.id)
+    }
   }
 
   async function logout() {
@@ -184,12 +222,7 @@ export default function HomePage() {
               className="border rounded-xl p-3"
               placeholder="Event name"
               value={form.name}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  name: e.target.value,
-                })
-              }
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
             />
 
@@ -197,36 +230,21 @@ export default function HomePage() {
               className="border rounded-xl p-3"
               placeholder="Event type"
               value={form.event_type}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  event_type: e.target.value,
-                })
-              }
+              onChange={(e) => setForm({ ...form, event_type: e.target.value })}
             />
 
             <input
               className="border rounded-xl p-3"
               type="date"
               value={form.start_date}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  start_date: e.target.value,
-                })
-              }
+              onChange={(e) => setForm({ ...form, start_date: e.target.value })}
             />
 
             <input
               className="border rounded-xl p-3"
               type="date"
               value={form.end_date}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  end_date: e.target.value,
-                })
-              }
+              onChange={(e) => setForm({ ...form, end_date: e.target.value })}
             />
 
             <input
@@ -235,10 +253,7 @@ export default function HomePage() {
               placeholder="Attendance goal"
               value={form.attendance_goal}
               onChange={(e) =>
-                setForm({
-                  ...form,
-                  attendance_goal: Number(e.target.value),
-                })
+                setForm({ ...form, attendance_goal: Number(e.target.value) })
               }
             />
 
@@ -248,22 +263,14 @@ export default function HomePage() {
               placeholder="Revenue goal"
               value={form.revenue_goal}
               onChange={(e) =>
-                setForm({
-                  ...form,
-                  revenue_goal: Number(e.target.value),
-                })
+                setForm({ ...form, revenue_goal: Number(e.target.value) })
               }
             />
 
             <select
               className="border rounded-xl p-3"
               value={form.status}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  status: e.target.value,
-                })
-              }
+              onChange={(e) => setForm({ ...form, status: e.target.value })}
             >
               <option>Idea</option>
               <option>Planning</option>
@@ -276,12 +283,7 @@ export default function HomePage() {
               className="border rounded-xl p-3 md:col-span-2"
               placeholder="Description"
               value={form.description}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  description: e.target.value,
-                })
-              }
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
 
             <button className="bg-slate-950 text-white rounded-2xl py-3 font-semibold md:col-span-2">
@@ -300,7 +302,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {events.map((event) => (
+            {events.map((event, index) => (
               <div
                 key={event.id}
                 className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6"
@@ -325,7 +327,25 @@ export default function HomePage() {
                   <p>💰 Revenue Goal: ${event.revenue_goal}</p>
                 </div>
 
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => moveEvent(index, 'up')}
+                    disabled={index === 0}
+                    className="border border-slate-300 text-slate-900 rounded-2xl py-2 font-semibold hover:bg-slate-50 disabled:opacity-40"
+                  >
+                    Move Up
+                  </button>
+
+                  <button
+                    onClick={() => moveEvent(index, 'down')}
+                    disabled={index === events.length - 1}
+                    className="border border-slate-300 text-slate-900 rounded-2xl py-2 font-semibold hover:bg-slate-50 disabled:opacity-40"
+                  >
+                    Move Down
+                  </button>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Link
                     href={`/events/${event.id}`}
                     className="block text-center w-full bg-slate-950 text-white rounded-2xl py-3 font-semibold hover:bg-slate-800 transition"
