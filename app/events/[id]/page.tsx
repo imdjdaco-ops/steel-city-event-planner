@@ -16,6 +16,7 @@ export default function EventDetailPage() {
   const [productionItems, setProductionItems] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+const [averageTicketPrice, setAverageTicketPrice] = useState(45)
 
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<any>(null)
@@ -328,6 +329,20 @@ useEffect(() => {
 
   const projectedProfit = estimatedIncome - estimatedExpenses - productionEstimated - servicesEstimated
 
+const totalCostsToCover =
+  estimatedExpenses + productionEstimated + servicesEstimated
+
+const attendeesNeededToBreakEven =
+  averageTicketPrice > 0
+    ? Math.ceil(totalCostsToCover / averageTicketPrice)
+    : 0
+
+const projectedRevenueAtGoal =
+  Number(event?.attendance_goal || 0) * averageTicketPrice
+
+const projectedProfitAtGoal =
+  projectedRevenueAtGoal - totalCostsToCover
+
   if (loading) return <main className="min-h-screen bg-slate-100 p-8">Loading...</main>
   if (!event) return <main className="min-h-screen bg-slate-100 p-8">Event not found.</main>
 if (checkingAuth) {
@@ -396,6 +411,71 @@ if (checkingAuth) {
           <Stat label="Production Costs" value={`$${productionEstimated}`} />
           <Stat label="Projected Profit" value={`$${projectedProfit}`} />
         </section>
+
+<section className="bg-amber-50 border border-amber-200 rounded-3xl p-6 space-y-5">
+  <div>
+    <h3 className="text-2xl font-bold">Budget Calculator</h3>
+
+    <p className="text-slate-600 mt-1">
+      Estimate break-even attendance and profitability.
+    </p>
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div>
+      <label className="text-sm text-slate-600">
+        Average Ticket Price
+      </label>
+
+      <input
+        className="mt-2 w-full border rounded-xl p-3"
+        type="number"
+        value={averageTicketPrice}
+        onChange={(e) =>
+          setAverageTicketPrice(Number(e.target.value))
+        }
+      />
+    </div>
+
+    <div className="bg-white rounded-2xl p-4 border border-amber-200">
+      <p className="text-sm text-slate-600">
+        Total Costs
+      </p>
+
+      <p className="text-2xl font-bold">
+        ${totalCostsToCover}
+      </p>
+    </div>
+
+    <div className="bg-white rounded-2xl p-4 border border-amber-200">
+      <p className="text-sm text-slate-600">
+        Break-Even Attendance
+      </p>
+
+      <p className="text-2xl font-bold">
+        {attendeesNeededToBreakEven}
+      </p>
+    </div>
+
+    <div className="bg-white rounded-2xl p-4 border border-amber-200">
+      <p className="text-sm text-slate-600">
+        Profit At Goal
+      </p>
+
+      <p className="text-2xl font-bold">
+        ${projectedProfitAtGoal}
+      </p>
+    </div>
+  </div>
+
+  <p className="text-sm text-slate-700">
+    At an average ticket price of $
+    {averageTicketPrice}, you need approximately{' '}
+    <strong>{attendeesNeededToBreakEven}</strong>{' '}
+    attendees to cover approximately{' '}
+    <strong>${totalCostsToCover}</strong> in expenses.
+  </p>
+</section>
 
         <SectionHeader
           title="Schedule Builder"
