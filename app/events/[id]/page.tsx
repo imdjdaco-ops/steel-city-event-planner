@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '../../../lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
-
-
+import { supabase } from '../../../lib/supabase'
 
 export default function EventDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const eventId = Array.isArray(params.id) ? params.id[0] : params.id
+
+  const [checkingAuth, setCheckingAuth] = useState(true)
+  const [loading, setLoading] = useState(true)
 
   const [event, setEvent] = useState<any>(null)
   const [budgetItems, setBudgetItems] = useState<any[]>([])
@@ -17,11 +19,17 @@ export default function EventDetailPage() {
   const [scheduleItems, setScheduleItems] = useState<any[]>([])
   const [productionItems, setProductionItems] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-const [averageTicketPrice, setAverageTicketPrice] = useState(45)
+
+  const [averageTicketPrice, setAverageTicketPrice] = useState(45)
 
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<any>(null)
+
+  const [showBudgetForm, setShowBudgetForm] = useState(false)
+  const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null)
+
+  const [showTaskForm, setShowTaskForm] = useState(false)
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
 
   const [showScheduleForm, setShowScheduleForm] = useState(false)
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null)
@@ -32,8 +40,25 @@ const [averageTicketPrice, setAverageTicketPrice] = useState(45)
   const [showServiceForm, setShowServiceForm] = useState(false)
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null)
 
-const router = useRouter()
-const [checkingAuth, setCheckingAuth] = useState(true)
+  const emptyBudgetForm = {
+    name: '',
+    category: '',
+    item_type: 'expense',
+    estimated_amount: 0,
+    actual_amount: 0,
+    status: 'planned',
+    notes: '',
+  }
+
+  const emptyTaskForm = {
+    title: '',
+    category: '',
+    status: 'Not Started',
+    priority: 'Medium',
+    due_date: '',
+    assigned_to: '',
+    notes: '',
+  }
 
   const emptyScheduleForm = {
     title: '',
@@ -70,50 +95,21 @@ const [checkingAuth, setCheckingAuth] = useState(true)
     notes: '',
   }
 
+  const [budgetForm, setBudgetForm] = useState(emptyBudgetForm)
+  const [taskForm, setTaskForm] = useState(emptyTaskForm)
   const [scheduleForm, setScheduleForm] = useState(emptyScheduleForm)
   const [productionForm, setProductionForm] = useState(emptyProductionForm)
   const [serviceForm, setServiceForm] = useState(emptyServiceForm)
 
-
-
   async function loadAll() {
     if (!eventId) return
 
-    const { data: eventData } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', eventId)
-      .maybeSingle()
-
-    const { data: budgetData } = await supabase
-      .from('budget_items')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('created_at', { ascending: false })
-
-    const { data: taskData } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('created_at', { ascending: false })
-
-    const { data: scheduleData } = await supabase
-      .from('schedule_items')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('start_time', { ascending: true })
-
-    const { data: productionData } = await supabase
-      .from('production_items')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('created_at', { ascending: false })
-
-    const { data: servicesData } = await supabase
-      .from('event_services')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('created_at', { ascending: false })
+    const { data: eventData } = await supabase.from('events').select('*').eq('id', eventId).maybeSingle()
+    const { data: budgetData } = await supabase.from('budget_items').select('*').eq('event_id', eventId).order('created_at', { ascending: false })
+    const { data: taskData } = await supabase.from('tasks').select('*').eq('event_id', eventId).order('created_at', { ascending: false })
+    const { data: scheduleData } = await supabase.from('schedule_items').select('*').eq('event_id', eventId).order('start_time', { ascending: true })
+    const { data: productionData } = await supabase.from('production_items').select('*').eq('event_id', eventId).order('created_at', { ascending: false })
+    const { data: servicesData } = await supabase.from('event_services').select('*').eq('event_id', eventId).order('created_at', { ascending: false })
 
     setEvent(eventData)
     setForm(eventData)
@@ -125,40 +121,141 @@ const [checkingAuth, setCheckingAuth] = useState(true)
     setLoading(false)
   }
 
-useEffect(() => {
-  async function checkUser() {
-    const { data } = await supabase.auth.getUser()
+  useEffect(() => {
+    async function checkUser() {
+      const { data } = await supabase.auth.getUser()
 
-    if (!data.user) {
-      router.push('/login')
-      return
+      if (!data.user) {
+        router.push('/login')
+        return
+      }
+
+      setCheckingAuth(false)
+      loadAll()
     }
 
-    setCheckingAuth(false)
-    loadAll()
-  }
-
-  checkUser()
-}, [eventId, router])
+    checkUser()
+  }, [eventId, router])
 
   async function saveEvent(e: React.FormEvent) {
     e.preventDefault()
 
-    await supabase
-      .from('events')
-      .update({
-        name: form.name,
-        event_type: form.event_type,
-        status: form.status,
-        start_date: form.start_date,
-        end_date: form.end_date,
-        attendance_goal: Number(form.attendance_goal),
-        revenue_goal: Number(form.revenue_goal),
-        description: form.description,
-      })
-      .eq('id', eventId)
+    await supabase.from('events').update({
+      name: form.name,
+      event_type: form.event_type,
+      status: form.status,
+      start_date: form.start_date,
+      end_date: form.end_date,
+      attendance_goal: Number(form.attendance_goal),
+      revenue_goal: Number(form.revenue_goal),
+      description: form.description,
+    }).eq('id', eventId)
 
     setEditing(false)
+    loadAll()
+  }
+
+  async function saveBudgetItem(e: React.FormEvent) {
+    e.preventDefault()
+
+    const payload = {
+      event_id: eventId,
+      name: budgetForm.name,
+      category: budgetForm.category,
+      item_type: budgetForm.item_type,
+      estimated_amount: Number(budgetForm.estimated_amount),
+      actual_amount: Number(budgetForm.actual_amount),
+      status: budgetForm.status,
+      notes: budgetForm.notes,
+    }
+
+    if (editingBudgetId) {
+      await supabase.from('budget_items').update(payload).eq('id', editingBudgetId)
+    } else {
+      await supabase.from('budget_items').insert([payload])
+    }
+
+    setBudgetForm(emptyBudgetForm)
+    setEditingBudgetId(null)
+    setShowBudgetForm(false)
+    loadAll()
+  }
+
+  function editBudgetItem(item: any) {
+    setBudgetForm({
+      name: item.name || '',
+      category: item.category || '',
+      item_type: item.item_type || 'expense',
+      estimated_amount: item.estimated_amount || 0,
+      actual_amount: item.actual_amount || 0,
+      status: item.status || 'planned',
+      notes: item.notes || '',
+    })
+
+    setEditingBudgetId(item.id)
+    setShowBudgetForm(true)
+  }
+
+  async function deleteBudgetItem(id: string) {
+    if (!window.confirm('Delete this budget item?')) return
+    await supabase.from('budget_items').delete().eq('id', id)
+    loadAll()
+  }
+
+  async function saveTask(e: React.FormEvent) {
+    e.preventDefault()
+
+    const payload = {
+      event_id: eventId,
+      title: taskForm.title,
+      category: taskForm.category,
+      status: taskForm.status,
+      priority: taskForm.priority,
+      due_date: taskForm.due_date || null,
+      assigned_to: taskForm.assigned_to,
+      notes: taskForm.notes,
+      completed_at: taskForm.status === 'Done' ? new Date().toISOString() : null,
+    }
+
+    if (editingTaskId) {
+      await supabase.from('tasks').update(payload).eq('id', editingTaskId)
+    } else {
+      await supabase.from('tasks').insert([payload])
+    }
+
+    setTaskForm(emptyTaskForm)
+    setEditingTaskId(null)
+    setShowTaskForm(false)
+    loadAll()
+  }
+
+  function editTask(task: any) {
+    setTaskForm({
+      title: task.title || '',
+      category: task.category || '',
+      status: task.status || 'Not Started',
+      priority: task.priority || 'Medium',
+      due_date: task.due_date || '',
+      assigned_to: task.assigned_to || '',
+      notes: task.notes || '',
+    })
+
+    setEditingTaskId(task.id)
+    setShowTaskForm(true)
+  }
+
+  async function updateTaskStatus(id: string, status: string) {
+    await supabase.from('tasks').update({
+      status,
+      completed_at: status === 'Done' ? new Date().toISOString() : null,
+    }).eq('id', id)
+
+    loadAll()
+  }
+
+  async function deleteTask(id: string) {
+    if (!window.confirm('Delete this task?')) return
+    await supabase.from('tasks').delete().eq('id', id)
     loadAll()
   }
 
@@ -313,50 +410,46 @@ useEffect(() => {
     loadAll()
   }
 
-  const estimatedIncome = budgetItems
+  const budgetEstimatedIncome = budgetItems
     .filter((item) => item.item_type === 'income')
     .reduce((sum, item) => sum + Number(item.estimated_amount || 0), 0)
 
-  const estimatedExpenses = budgetItems
+  const budgetEstimatedExpenses = budgetItems
     .filter((item) => item.item_type === 'expense')
     .reduce((sum, item) => sum + Number(item.estimated_amount || 0), 0)
 
-  const productionEstimated = productionItems.reduce(
-    (sum, item) => sum + Number(item.estimated_cost || 0),
-    0
-  )
+  const budgetActualIncome = budgetItems
+    .filter((item) => item.item_type === 'income')
+    .reduce((sum, item) => sum + Number(item.actual_amount || 0), 0)
 
-  const servicesEstimated = services.reduce(
-    (sum, item) => sum + Number(item.estimated_cost || 0),
-    0
-  )
+  const budgetActualExpenses = budgetItems
+    .filter((item) => item.item_type === 'expense')
+    .reduce((sum, item) => sum + Number(item.actual_amount || 0), 0)
 
-  const projectedProfit = estimatedIncome - estimatedExpenses - productionEstimated - servicesEstimated
+  const productionEstimated = productionItems.reduce((sum, item) => sum + Number(item.estimated_cost || 0), 0)
+  const productionActual = productionItems.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0)
 
-const totalCostsToCover =
-  estimatedExpenses + productionEstimated + servicesEstimated
+  const servicesEstimated = services.reduce((sum, item) => sum + Number(item.estimated_cost || 0), 0)
+  const servicesActual = services.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0)
 
-const attendeesNeededToBreakEven =
-  averageTicketPrice > 0
-    ? Math.ceil(totalCostsToCover / averageTicketPrice)
-    : 0
+  const totalEstimatedCosts = budgetEstimatedExpenses + productionEstimated + servicesEstimated
+  const totalActualCosts = budgetActualExpenses + productionActual + servicesActual
 
-const projectedRevenueAtGoal =
-  Number(event?.attendance_goal || 0) * averageTicketPrice
+  const projectedProfit = budgetEstimatedIncome - totalEstimatedCosts
+  const actualProfit = budgetActualIncome - totalActualCosts
 
-const projectedProfitAtGoal =
-  projectedRevenueAtGoal - totalCostsToCover
+  const breakEvenAttendees =
+    averageTicketPrice > 0 ? Math.ceil(totalEstimatedCosts / averageTicketPrice) : 0
 
+  const projectedRevenueAtGoal = Number(event?.attendance_goal || 0) * averageTicketPrice
+  const projectedProfitAtGoal = projectedRevenueAtGoal - totalEstimatedCosts
+
+  const completedTasks = tasks.filter((task) => task.status === 'Done').length
+  const taskProgress = tasks.length ? Math.round((completedTasks / tasks.length) * 100) : 0
+
+  if (checkingAuth) return <main className="min-h-screen bg-slate-100 p-8 text-slate-950">Checking access...</main>
   if (loading) return <main className="min-h-screen bg-slate-100 p-8">Loading...</main>
   if (!event) return <main className="min-h-screen bg-slate-100 p-8">Event not found.</main>
-if (checkingAuth) {
-  return (
-    <main className="min-h-screen bg-slate-100 p-8 text-slate-950">
-      Checking access...
-    </main>
-  )
-}
-
 
   return (
     <main className="min-h-screen bg-slate-100 p-8 text-slate-950">
@@ -385,15 +478,15 @@ if (checkingAuth) {
         </section>
 
         {editing && form && (
-          <form onSubmit={saveEvent} className="bg-white rounded-3xl border border-slate-200 p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input className="border rounded-xl p-3" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Event name" />
-            <input className="border rounded-xl p-3" value={form.event_type || ''} onChange={(e) => setForm({ ...form, event_type: e.target.value })} placeholder="Event type" />
-            <input className="border rounded-xl p-3" type="date" value={form.start_date || ''} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
-            <input className="border rounded-xl p-3" type="date" value={form.end_date || ''} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
-            <input className="border rounded-xl p-3" type="number" value={form.attendance_goal || 0} onChange={(e) => setForm({ ...form, attendance_goal: Number(e.target.value) })} />
-            <input className="border rounded-xl p-3" type="number" value={form.revenue_goal || 0} onChange={(e) => setForm({ ...form, revenue_goal: Number(e.target.value) })} />
+          <form onSubmit={saveEvent} className="FormGrid">
+            <input className="Input" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Event name" />
+            <input className="Input" value={form.event_type || ''} onChange={(e) => setForm({ ...form, event_type: e.target.value })} placeholder="Event type" />
+            <input className="Input" type="date" value={form.start_date || ''} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
+            <input className="Input" type="date" value={form.end_date || ''} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
+            <input className="Input" type="number" value={form.attendance_goal || 0} onChange={(e) => setForm({ ...form, attendance_goal: Number(e.target.value) })} />
+            <input className="Input" type="number" value={form.revenue_goal || 0} onChange={(e) => setForm({ ...form, revenue_goal: Number(e.target.value) })} />
 
-            <select className="border rounded-xl p-3" value={form.status || 'Planning'} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+            <select className="Input" value={form.status || 'Planning'} onChange={(e) => setForm({ ...form, status: e.target.value })}>
               <option>Idea</option>
               <option>Planning</option>
               <option>Active</option>
@@ -401,85 +494,173 @@ if (checkingAuth) {
               <option>Archived</option>
             </select>
 
-            <textarea className="border rounded-xl p-3 md:col-span-2" value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" />
+            <textarea className="Input md:col-span-2" value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" />
 
-            <button className="bg-slate-950 text-white rounded-2xl py-3 font-semibold md:col-span-2">
-              Save Changes
-            </button>
+            <button className="Button md:col-span-2">Save Changes</button>
           </form>
         )}
 
         <section className="grid grid-cols-1 md:grid-cols-4 gap-5">
           <Stat label="Attendance Goal" value={event.attendance_goal} />
           <Stat label="Revenue Goal" value={`$${event.revenue_goal}`} />
-          <Stat label="Production Costs" value={`$${productionEstimated}`} />
-          <Stat label="Projected Profit" value={`$${projectedProfit}`} />
+          <Stat label="Total Estimated Costs" value={`$${totalEstimatedCosts}`} />
+          <Stat label="Task Progress" value={`${taskProgress}%`} />
         </section>
 
-<section className="bg-amber-50 border border-amber-200 rounded-3xl p-6 space-y-5">
-  <div>
-    <h3 className="text-2xl font-bold">Budget Calculator</h3>
+        <section className="bg-amber-50 border border-amber-200 rounded-3xl p-6 space-y-5">
+          <div>
+            <h2 className="text-3xl font-bold">Budget Calculator</h2>
+            <p className="text-slate-600 mt-1">
+              Combines budget expenses, production costs, and vendor/service costs.
+            </p>
+          </div>
 
-    <p className="text-slate-600 mt-1">
-      Estimate break-even attendance and profitability.
-    </p>
-  </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="text-sm text-slate-600">Average Ticket Price</label>
+              <input
+                className="mt-2 w-full border rounded-xl p-3"
+                type="number"
+                value={averageTicketPrice}
+                onChange={(e) => setAverageTicketPrice(Number(e.target.value))}
+              />
+            </div>
 
-  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <div>
-      <label className="text-sm text-slate-600">
-        Average Ticket Price
-      </label>
+            <MiniStat label="Total Estimated Costs" value={`$${totalEstimatedCosts}`} />
+            <MiniStat label="Break-Even Attendees" value={breakEvenAttendees} />
+            <MiniStat label="Profit At Goal" value={`$${projectedProfitAtGoal}`} />
+          </div>
 
-      <input
-        className="mt-2 w-full border rounded-xl p-3"
-        type="number"
-        value={averageTicketPrice}
-        onChange={(e) =>
-          setAverageTicketPrice(Number(e.target.value))
-        }
-      />
-    </div>
+          <p className="text-sm text-slate-700">
+            At an average ticket price of <strong>${averageTicketPrice}</strong>, you need approximately{' '}
+            <strong>{breakEvenAttendees}</strong> attendees to cover about{' '}
+            <strong>${totalEstimatedCosts}</strong> in estimated event costs.
+          </p>
+        </section>
 
-    <div className="bg-white rounded-2xl p-4 border border-amber-200">
-      <p className="text-sm text-slate-600">
-        Total Costs
-      </p>
+        <SectionHeader
+          title="Budget"
+          subtitle="Track direct financial income and expenses like venue, flights, hotels, artist fees, marketing, and ticket revenue."
+          button={showBudgetForm ? 'Cancel' : '+ Add Budget Item'}
+          onClick={() => {
+            setShowBudgetForm(!showBudgetForm)
+            setEditingBudgetId(null)
+            setBudgetForm(emptyBudgetForm)
+          }}
+        />
 
-      <p className="text-2xl font-bold">
-        ${totalCostsToCover}
-      </p>
-    </div>
+        <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <MiniStat label="Budget Income" value={`$${budgetEstimatedIncome}`} />
+          <MiniStat label="Budget Expenses" value={`$${budgetEstimatedExpenses}`} />
+          <MiniStat label="Projected Profit" value={`$${projectedProfit}`} />
+          <MiniStat label="Actual Profit" value={`$${actualProfit}`} />
+        </section>
 
-    <div className="bg-white rounded-2xl p-4 border border-amber-200">
-      <p className="text-sm text-slate-600">
-        Break-Even Attendance
-      </p>
+        {showBudgetForm && (
+          <form onSubmit={saveBudgetItem} className="FormGrid">
+            <input className="Input" placeholder="Item name" value={budgetForm.name} onChange={(e) => setBudgetForm({ ...budgetForm, name: e.target.value })} required />
+            <input className="Input" placeholder="Category: Venue, Artists, Travel..." value={budgetForm.category} onChange={(e) => setBudgetForm({ ...budgetForm, category: e.target.value })} />
 
-      <p className="text-2xl font-bold">
-        {attendeesNeededToBreakEven}
-      </p>
-    </div>
+            <select className="Input" value={budgetForm.item_type} onChange={(e) => setBudgetForm({ ...budgetForm, item_type: e.target.value })}>
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+            </select>
 
-    <div className="bg-white rounded-2xl p-4 border border-amber-200">
-      <p className="text-sm text-slate-600">
-        Profit At Goal
-      </p>
+            <select className="Input" value={budgetForm.status} onChange={(e) => setBudgetForm({ ...budgetForm, status: e.target.value })}>
+              <option value="planned">Planned</option>
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+              <option value="received">Received</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
 
-      <p className="text-2xl font-bold">
-        ${projectedProfitAtGoal}
-      </p>
-    </div>
-  </div>
+            <input className="Input" type="number" placeholder="Estimated amount" value={budgetForm.estimated_amount} onChange={(e) => setBudgetForm({ ...budgetForm, estimated_amount: Number(e.target.value) })} />
+            <input className="Input" type="number" placeholder="Actual amount" value={budgetForm.actual_amount} onChange={(e) => setBudgetForm({ ...budgetForm, actual_amount: Number(e.target.value) })} />
+            <textarea className="Input md:col-span-2" placeholder="Notes" value={budgetForm.notes} onChange={(e) => setBudgetForm({ ...budgetForm, notes: e.target.value })} />
 
-  <p className="text-sm text-slate-700">
-    At an average ticket price of $
-    {averageTicketPrice}, you need approximately{' '}
-    <strong>{attendeesNeededToBreakEven}</strong>{' '}
-    attendees to cover approximately{' '}
-    <strong>${totalCostsToCover}</strong> in expenses.
-  </p>
-</section>
+            <button className="Button md:col-span-2">
+              {editingBudgetId ? 'Save Budget Changes' : 'Save Budget Item'}
+            </button>
+          </form>
+        )}
+
+        <CardList>
+          {budgetItems.map((item) => (
+            <ItemCard key={item.id}>
+              <div>
+                <p className="text-xs uppercase text-slate-500">{item.category}</p>
+                <h3 className="text-lg font-bold">{item.name}</h3>
+                <p className="text-sm text-slate-600 capitalize">{item.item_type} • {item.status}</p>
+                <p className="text-sm text-slate-600">Estimated: ${item.estimated_amount} • Actual: ${item.actual_amount}</p>
+              </div>
+              <Actions onEdit={() => editBudgetItem(item)} onDelete={() => deleteBudgetItem(item.id)} />
+            </ItemCard>
+          ))}
+          {budgetItems.length === 0 && <p className="text-slate-500">No budget items yet.</p>}
+        </CardList>
+
+        <SectionHeader
+          title="Tasks"
+          subtitle="Production checklist for this event."
+          button={showTaskForm ? 'Cancel' : '+ Add Task'}
+          onClick={() => {
+            setShowTaskForm(!showTaskForm)
+            setEditingTaskId(null)
+            setTaskForm(emptyTaskForm)
+          }}
+        />
+
+        {showTaskForm && (
+          <form onSubmit={saveTask} className="FormGrid">
+            <input className="Input" placeholder="Task title" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} required />
+            <input className="Input" placeholder="Category" value={taskForm.category} onChange={(e) => setTaskForm({ ...taskForm, category: e.target.value })} />
+
+            <select className="Input" value={taskForm.status} onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value })}>
+              <option>Not Started</option>
+              <option>In Progress</option>
+              <option>Done</option>
+              <option>Blocked</option>
+            </select>
+
+            <select className="Input" value={taskForm.priority} onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}>
+              <option>Low</option>
+              <option>Medium</option>
+              <option>High</option>
+            </select>
+
+            <input className="Input" type="date" value={taskForm.due_date} onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })} />
+            <input className="Input" placeholder="Assigned to" value={taskForm.assigned_to} onChange={(e) => setTaskForm({ ...taskForm, assigned_to: e.target.value })} />
+            <textarea className="Input md:col-span-2" placeholder="Notes" value={taskForm.notes} onChange={(e) => setTaskForm({ ...taskForm, notes: e.target.value })} />
+
+            <button className="Button md:col-span-2">
+              {editingTaskId ? 'Save Task Changes' : 'Save Task'}
+            </button>
+          </form>
+        )}
+
+        <CardList>
+          {tasks.map((task) => (
+            <ItemCard key={task.id}>
+              <div>
+                <p className="text-xs uppercase text-slate-500">{task.category || 'General'}</p>
+                <h3 className="text-lg font-bold">{task.title}</h3>
+                <p className="text-sm text-slate-600">Priority: {task.priority} {task.due_date ? `• Due: ${task.due_date}` : ''}</p>
+                {task.assigned_to && <p className="text-sm text-slate-600">Assigned to: {task.assigned_to}</p>}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <select className="border rounded-xl p-2" value={task.status} onChange={(e) => updateTaskStatus(task.id, e.target.value)}>
+                  <option>Not Started</option>
+                  <option>In Progress</option>
+                  <option>Done</option>
+                  <option>Blocked</option>
+                </select>
+                <Actions onEdit={() => editTask(task)} onDelete={() => deleteTask(task.id)} />
+              </div>
+            </ItemCard>
+          ))}
+          {tasks.length === 0 && <p className="text-slate-500">No tasks yet.</p>}
+        </CardList>
 
         <SectionHeader
           title="Schedule Builder"
@@ -495,7 +676,6 @@ if (checkingAuth) {
         {showScheduleForm && (
           <form onSubmit={saveScheduleItem} className="FormGrid">
             <input className="Input" placeholder="Title" value={scheduleForm.title} onChange={(e) => setScheduleForm({ ...scheduleForm, title: e.target.value })} required />
-
             <select className="Input" value={scheduleForm.schedule_type} onChange={(e) => setScheduleForm({ ...scheduleForm, schedule_type: e.target.value })}>
               <option>Workshop</option>
               <option>Party</option>
@@ -506,12 +686,10 @@ if (checkingAuth) {
               <option>Doors Open</option>
               <option>Cleanup</option>
             </select>
-
             <input className="Input" type="datetime-local" value={scheduleForm.start_time} onChange={(e) => setScheduleForm({ ...scheduleForm, start_time: e.target.value })} />
             <input className="Input" type="datetime-local" value={scheduleForm.end_time} onChange={(e) => setScheduleForm({ ...scheduleForm, end_time: e.target.value })} />
             <input className="Input" placeholder="Room / Floor" value={scheduleForm.room} onChange={(e) => setScheduleForm({ ...scheduleForm, room: e.target.value })} />
             <textarea className="Input md:col-span-2" placeholder="Notes" value={scheduleForm.notes} onChange={(e) => setScheduleForm({ ...scheduleForm, notes: e.target.value })} />
-
             <button className="Button md:col-span-2">{editingScheduleId ? 'Save Schedule Changes' : 'Save Schedule Item'}</button>
           </form>
         )}
@@ -546,7 +724,6 @@ if (checkingAuth) {
             <input className="Input" placeholder="Item name" value={productionForm.name} onChange={(e) => setProductionForm({ ...productionForm, name: e.target.value })} required />
             <input className="Input" placeholder="Category: Sound, Lighting, DJ Gear..." value={productionForm.category} onChange={(e) => setProductionForm({ ...productionForm, category: e.target.value })} />
             <input className="Input" type="number" placeholder="Quantity" value={productionForm.quantity} onChange={(e) => setProductionForm({ ...productionForm, quantity: Number(e.target.value) })} />
-
             <select className="Input" value={productionForm.status} onChange={(e) => setProductionForm({ ...productionForm, status: e.target.value })}>
               <option>Needed</option>
               <option>Confirmed</option>
@@ -555,25 +732,21 @@ if (checkingAuth) {
               <option>Returned</option>
               <option>Cancelled</option>
             </select>
-
             <select className="Input" value={productionForm.ownership_type} onChange={(e) => setProductionForm({ ...productionForm, ownership_type: e.target.value })}>
               <option>Owned</option>
               <option>Rental</option>
               <option>Borrowed</option>
               <option>Vendor</option>
             </select>
-
             <label className="flex items-center gap-3 border rounded-xl p-3 bg-white">
               <input type="checkbox" checked={productionForm.rental_needed} onChange={(e) => setProductionForm({ ...productionForm, rental_needed: e.target.checked })} />
               Rental needed?
             </label>
-
             <input className="Input" type="number" placeholder="Estimated cost" value={productionForm.estimated_cost} onChange={(e) => setProductionForm({ ...productionForm, estimated_cost: Number(e.target.value) })} />
             <input className="Input" type="number" placeholder="Actual cost" value={productionForm.actual_cost} onChange={(e) => setProductionForm({ ...productionForm, actual_cost: Number(e.target.value) })} />
             <input className="Input" placeholder="Vendor name" value={productionForm.vendor_name} onChange={(e) => setProductionForm({ ...productionForm, vendor_name: e.target.value })} />
             <input className="Input" placeholder="Owner / Responsible person" value={productionForm.owner} onChange={(e) => setProductionForm({ ...productionForm, owner: e.target.value })} />
             <textarea className="Input md:col-span-2" placeholder="Notes" value={productionForm.notes} onChange={(e) => setProductionForm({ ...productionForm, notes: e.target.value })} />
-
             <button className="Button md:col-span-2">{editingProductionId ? 'Save Production Changes' : 'Save Production Item'}</button>
           </form>
         )}
@@ -586,7 +759,6 @@ if (checkingAuth) {
                 <h3 className="text-lg font-bold">{item.name} × {item.quantity}</h3>
                 <p className="text-sm text-slate-600">{item.ownership_type} • {item.status} • Rental: {item.rental_needed ? 'Yes' : 'No'}</p>
                 <p className="text-sm text-slate-600">Estimated: ${item.estimated_cost} • Actual: ${item.actual_cost}</p>
-                {item.owner && <p className="text-sm text-slate-600">Owner: {item.owner}</p>}
               </div>
               <Actions onEdit={() => editProductionItem(item)} onDelete={() => deleteProductionItem(item.id)} />
             </ItemCard>
@@ -622,7 +794,6 @@ if (checkingAuth) {
             <input className="Input" type="number" placeholder="Estimated cost" value={serviceForm.estimated_cost} onChange={(e) => setServiceForm({ ...serviceForm, estimated_cost: Number(e.target.value) })} />
             <input className="Input" type="number" placeholder="Actual cost" value={serviceForm.actual_cost} onChange={(e) => setServiceForm({ ...serviceForm, actual_cost: Number(e.target.value) })} />
             <textarea className="Input md:col-span-2" placeholder="Notes" value={serviceForm.notes} onChange={(e) => setServiceForm({ ...serviceForm, notes: e.target.value })} />
-
             <button className="Button md:col-span-2">{editingServiceId ? 'Save Service Changes' : 'Save Service'}</button>
           </form>
         )}
@@ -634,7 +805,6 @@ if (checkingAuth) {
                 <p className="text-xs uppercase text-slate-500">{item.service_type}</p>
                 <h3 className="text-lg font-bold">{item.name}</h3>
                 <p className="text-sm text-slate-600">{item.status} • Estimated: ${item.estimated_cost} • Actual: ${item.actual_cost}</p>
-                {item.contact_name && <p className="text-sm text-slate-600">Contact: {item.contact_name}</p>}
               </div>
               <Actions onEdit={() => editService(item)} onDelete={() => deleteService(item.id)} />
             </ItemCard>
@@ -683,6 +853,15 @@ function Stat({ label, value }: { label: string; value: any }) {
     <div className="bg-white rounded-3xl border border-slate-200 p-6">
       <p className="text-sm text-slate-600">{label}</p>
       <p className="text-3xl font-bold mt-2">{value}</p>
+    </div>
+  )
+}
+
+function MiniStat({ label, value }: { label: string; value: any }) {
+  return (
+    <div className="bg-white rounded-2xl p-4 border border-amber-200">
+      <p className="text-sm text-slate-600">{label}</p>
+      <p className="text-2xl font-bold">{value}</p>
     </div>
   )
 }
