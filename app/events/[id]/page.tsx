@@ -5,6 +5,12 @@ import Link from 'next/link'
 import { supabase } from '../../../lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
 
+document.querySelectorAll('input[type="number"]').forEach(el => {
+  el.type = 'text';
+  el.onfocus = function() { this.type = 'number'; };
+  el.onblur = function() { if (this.value === "") this.type = 'text'; };
+});
+
 export default function EventDetailPage() {
   const params = useParams()
   const eventId = Array.isArray(params.id) ? params.id[0] : params.id
