@@ -45,6 +45,17 @@ const [scheduleView, setScheduleView] = useState('timeline')
   const [showServiceForm, setShowServiceForm] = useState(false)
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null)
 
+const [openSections, setOpenSections] = useState({
+  overview: true,
+  budget: true,
+  schedule: true,
+  production: true,
+  vendors: true,
+  tasks: true,
+})
+
+
+
   const emptyBudgetForm = {
     name: '',
     category: '',
@@ -516,6 +527,13 @@ function groupScheduleByStaff(items: any[]) {
   }, {} as Record<string, any[]>)
 }
 
+function toggleSection(section: keyof typeof openSections) {
+  setOpenSections((prev) => ({
+    ...prev,
+    [section]: !prev[section],
+  }))
+}
+
 function getScheduleColor(type: string) {
   const normalized = type?.toLowerCase() || ''
 
@@ -638,16 +656,20 @@ function getScheduleColor(type: string) {
           </p>
         </section>
 
-        <SectionHeader
-          title="Budget"
-          subtitle="Track direct financial income and expenses like venue, flights, hotels, artist fees, marketing, and ticket revenue."
-          button={showBudgetForm ? 'Cancel' : '+ Add Budget Item'}
-          onClick={() => {
-            setShowBudgetForm(!showBudgetForm)
-            setEditingBudgetId(null)
-            setBudgetForm(emptyBudgetForm)
-          }}
-        />
+<CollapsibleSectionHeader
+  title="Budget"
+  subtitle="Track direct financial income and expenses like venue, flights, hotels, artist fees, marketing, and ticket revenue."
+  button={showBudgetForm ? 'Cancel' : '+ Add Budget Item'}
+  isOpen={openSections.budget}
+  onToggle={() => toggleSection('budget')}
+  onButtonClick={() => {
+    setShowBudgetForm(!showBudgetForm)
+    setEditingBudgetId(null)
+    setBudgetForm(emptyBudgetForm)
+  }}
+/>
+{openSections.budget && (
+  <div className="space-y-6">
 
         {showBudgetForm && (
           <form onSubmit={saveBudgetItem} className="FormGrid">
@@ -700,6 +722,9 @@ function getScheduleColor(type: string) {
           ))}
           {budgetItems.length === 0 && <p className="text-slate-500">No budget items yet.</p>}
         </CardList>
+
+  </div>
+)}
 
         <SectionHeader
           title="Tasks"
@@ -1227,6 +1252,53 @@ function SectionHeader({ title, subtitle, button, onClick }: { title: string; su
         </div>
 
         <button onClick={onClick} className="bg-slate-950 text-white rounded-2xl px-5 py-3 font-semibold hover:bg-slate-800">
+          {button}
+        </button>
+      </div>
+    </section>
+  )
+}
+
+function CollapsibleSectionHeader({
+  title,
+  subtitle,
+  button,
+  isOpen,
+  onToggle,
+  onButtonClick,
+}: {
+  title: string
+  subtitle: string
+  button: string
+  isOpen: boolean
+  onToggle: () => void
+  onButtonClick: () => void
+}) {
+  return (
+    <section className="bg-white rounded-3xl border border-slate-200 p-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="text-left flex-1"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-bold">
+              {isOpen ? '−' : '+'}
+            </span>
+
+            <div>
+              <h2 className="text-3xl font-bold">{title}</h2>
+              <p className="text-slate-600 mt-1">{subtitle}</p>
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={onButtonClick}
+          className="bg-slate-950 text-white rounded-2xl px-5 py-3 font-semibold hover:bg-slate-800"
+        >
           {button}
         </button>
       </div>
