@@ -815,7 +815,7 @@ function getScheduleColor(type: string) {
   }}
 />
 
-{openSections.tasks && (
+{openSections.schedule && (
   <div className="space-y-6">
     {/* task form + task cards go here */}
 
