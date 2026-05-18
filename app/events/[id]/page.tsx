@@ -980,6 +980,8 @@ getScheduleColor={getScheduleColor}
 
 {openSections.production && (
   <div className="space-y-6">
+    {showProductionForm && (
+
           <form onSubmit={saveProductionItem} className="FormGrid">
             <Field label="Item Name"><input className="Input" value={productionForm.name} onChange={(e) => setProductionForm({ ...productionForm, name: e.target.value })} required /></Field>
             <Field label="Category"><input className="Input" value={productionForm.category} onChange={(e) => setProductionForm({ ...productionForm, category: e.target.value })} /></Field>
@@ -1034,8 +1036,7 @@ getScheduleColor={getScheduleColor}
               <Actions onEdit={() => editProductionItem(item)} onDelete={() => deleteProductionItem(item.id)} />
             </ItemCard>
           ))}
-        </CardList>
-
+    </CardList>
   </div>
 )}
 
@@ -1056,7 +1057,8 @@ getScheduleColor={getScheduleColor}
 
 {openSections.vendors && (
   <div className="space-y-6">
-          <form onSubmit={saveService} className="FormGrid">
+    {showServiceForm && (
+      <form onSubmit={saveService} className="FormGrid">
             <Field label="Service / Vendor Name"><input className="Input" value={serviceForm.name} onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} required /></Field>
             <Field label="Service Type"><input className="Input" value={serviceForm.service_type} onChange={(e) => setServiceForm({ ...serviceForm, service_type: e.target.value })} /></Field>
             <Field label="Contact Name"><input className="Input" value={serviceForm.contact_name} onChange={(e) => setServiceForm({ ...serviceForm, contact_name: e.target.value })} /></Field>
@@ -1093,7 +1095,7 @@ getScheduleColor={getScheduleColor}
               <Actions onEdit={() => editService(item)} onDelete={() => deleteService(item.id)} />
             </ItemCard>
           ))}
-        </CardList>
+    </CardList>
   </div>
 )}
       </div>
