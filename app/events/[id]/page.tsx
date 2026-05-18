@@ -37,6 +37,7 @@ export default function EventDetailPage() {
 
   const [showScheduleForm, setShowScheduleForm] = useState(false)
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null)
+const [scheduleView, setScheduleView] = useState('timeline')
 
   const [showProductionForm, setShowProductionForm] = useState(false)
   const [editingProductionId, setEditingProductionId] = useState<string | null>(null)
@@ -439,6 +440,52 @@ setScheduleForm({
   const completedTasks = tasks.filter((task) => task.status === 'Done').length
   const taskProgress = tasks.length ? Math.round((completedTasks / tasks.length) * 100) : 0
 
+function getDayLabel(dateString: string) {
+  if (!dateString) return 'No Date'
+
+  return new Date(dateString).toLocaleDateString([], {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function getTimeLabel(dateString: string) {
+  if (!dateString) return 'No time'
+
+  return new Date(dateString).toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
+function groupScheduleByDay(items: any[]) {
+  return items.reduce((groups, item) => {
+    const key = getDayLabel(item.start_time)
+    if (!groups[key]) groups[key] = []
+    groups[key].push(item)
+    return groups
+  }, {} as Record<string, any[]>)
+}
+
+function groupScheduleByRoom(items: any[]) {
+  return items.reduce((groups, item) => {
+    const key = item.room || 'No Room / Floor'
+    if (!groups[key]) groups[key] = []
+    groups[key].push(item)
+    return groups
+  }, {} as Record<string, any[]>)
+}
+
+function groupScheduleByStaff(items: any[]) {
+  return items.reduce((groups, item) => {
+    const key = item.assigned_person || 'Unassigned'
+    if (!groups[key]) groups[key] = []
+    groups[key].push(item)
+    return groups
+  }, {} as Record<string, any[]>)
+}
+
   if (checkingAuth) return <main className="min-h-screen bg-slate-100 p-8 text-slate-950">Checking access...</main>
   if (loading) return <main className="min-h-screen bg-slate-100 p-8">Loading...</main>
   if (!event) return <main className="min-h-screen bg-slate-100 p-8">Event not found.</main>
@@ -706,34 +753,98 @@ setScheduleForm({
           </form>
         )}
 
-        <CardList>
-          {scheduleItems.map((item) => (
-            <ItemCard key={item.id}>
-              <div>
-                <p className="text-xs uppercase text-slate-500">{item.schedule_type}</p>
-                <h3 className="text-lg font-bold">{item.title}</h3>
- <p className="text-sm text-slate-600">
-  {item.start_time ? new Date(item.start_time).toLocaleString() : 'No start time'}
-  {' → '}
-  {item.end_time ? new Date(item.end_time).toLocaleString() : 'No end time'}
-</p>
+       <section className="bg-white rounded-3xl border border-slate-200 p-6 space-y-5">
+  <div className="flex flex-wrap gap-3">
+    <button
+      onClick={() => setScheduleView('timeline')}
+      className={`rounded-2xl px-4 py-2 font-semibold ${
+        scheduleView === 'timeline'
+          ? 'bg-slate-950 text-white'
+          : 'border border-slate-300 text-slate-800'
+      }`}
+    >
+      Timeline
+    </button>
 
-{item.room && (
-  <p className="text-sm text-slate-600">
-    Room/Floor: {item.room}
-  </p>
-)}
+    <button
+      onClick={() => setScheduleView('day')}
+      className={`rounded-2xl px-4 py-2 font-semibold ${
+        scheduleView === 'day'
+          ? 'bg-slate-950 text-white'
+          : 'border border-slate-300 text-slate-800'
+      }`}
+    >
+      By Day
+    </button>
 
-{item.assigned_person && (
-  <p className="text-sm text-slate-600">
-    Assigned: {item.assigned_person}
-  </p>
-)}
-              </div>
-              <Actions onEdit={() => editScheduleItem(item)} onDelete={() => deleteScheduleItem(item.id)} />
-            </ItemCard>
-          ))}
-        </CardList>
+    <button
+      onClick={() => setScheduleView('room')}
+      className={`rounded-2xl px-4 py-2 font-semibold ${
+        scheduleView === 'room'
+          ? 'bg-slate-950 text-white'
+          : 'border border-slate-300 text-slate-800'
+      }`}
+    >
+      By Room/Floor
+    </button>
+
+    <button
+      onClick={() => setScheduleView('staff')}
+      className={`rounded-2xl px-4 py-2 font-semibold ${
+        scheduleView === 'staff'
+          ? 'bg-slate-950 text-white'
+          : 'border border-slate-300 text-slate-800'
+      }`}
+    >
+      By Staff/Volunteer
+    </button>
+  </div>
+
+  {scheduleItems.length === 0 && (
+    <p className="text-slate-500">No schedule items yet.</p>
+  )}
+
+  {scheduleView === 'timeline' && (
+    <div className="space-y-4">
+      {scheduleItems.map((item) => (
+        <ScheduleTimelineItem
+          key={item.id}
+          item={item}
+          getTimeLabel={getTimeLabel}
+          onEdit={() => editScheduleItem(item)}
+          onDelete={() => deleteScheduleItem(item.id)}
+        />
+      ))}
+    </div>
+  )}
+
+  {scheduleView === 'day' && (
+    <GroupedScheduleView
+      groups={groupScheduleByDay(scheduleItems)}
+      getTimeLabel={getTimeLabel}
+      onEdit={editScheduleItem}
+      onDelete={deleteScheduleItem}
+    />
+  )}
+
+  {scheduleView === 'room' && (
+    <GroupedScheduleView
+      groups={groupScheduleByRoom(scheduleItems)}
+      getTimeLabel={getTimeLabel}
+      onEdit={editScheduleItem}
+      onDelete={deleteScheduleItem}
+    />
+  )}
+
+  {scheduleView === 'staff' && (
+    <GroupedScheduleView
+      groups={groupScheduleByStaff(scheduleItems)}
+      getTimeLabel={getTimeLabel}
+      onEdit={editScheduleItem}
+      onDelete={deleteScheduleItem}
+    />
+  )}
+</section>
 
         <SectionHeader
           title="Production Items"
@@ -892,6 +1003,115 @@ setScheduleForm({
     </main>
   )
 }
+
+function ScheduleTimelineItem({
+  item,
+  getTimeLabel,
+  onEdit,
+  onDelete,
+}: {
+  item: any
+  getTimeLabel: (dateString: string) => string
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-4 border-l-4 border-amber-400 bg-slate-50 rounded-2xl p-5">
+      <div>
+        <p className="text-xl font-bold text-slate-950">
+          {getTimeLabel(item.start_time)}
+        </p>
+
+        <p className="text-sm text-slate-500">
+          to {getTimeLabel(item.end_time)}
+        </p>
+      </div>
+
+      <div className="flex justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">
+            {item.schedule_type}
+          </p>
+
+          <h3 className="text-xl font-bold mt-1">{item.title}</h3>
+
+          {item.room && (
+            <p className="text-sm text-slate-600 mt-2">
+              Room/Floor: {item.room}
+            </p>
+          )}
+
+          {item.assigned_person && (
+            <p className="text-sm text-slate-600">
+              Assigned: {item.assigned_person}
+            </p>
+          )}
+
+          {item.notes && (
+            <p className="text-sm text-slate-600 mt-3">{item.notes}</p>
+          )}
+        </div>
+
+        <Actions onEdit={onEdit} onDelete={onDelete} />
+      </div>
+    </div>
+  )
+}
+
+function GroupedScheduleView({
+  groups,
+  getTimeLabel,
+  onEdit,
+  onDelete,
+}: {
+  groups: Record<string, any[]>
+  getTimeLabel: (dateString: string) => string
+  onEdit: (item: any) => void
+  onDelete: (id: string) => void
+}) {
+  return (
+    <div className="space-y-6">
+      {Object.entries(groups).map(([groupName, items]) => (
+        <div key={groupName} className="space-y-3">
+          <h3 className="text-2xl font-bold border-b border-slate-200 pb-2">
+            {groupName}
+          </h3>
+
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="bg-slate-50 rounded-2xl border border-slate-200 p-5 flex justify-between gap-4"
+            >
+              <div>
+                <p className="text-sm font-semibold text-slate-500">
+                  {getTimeLabel(item.start_time)} – {getTimeLabel(item.end_time)}
+                </p>
+
+                <h4 className="text-lg font-bold mt-1">{item.title}</h4>
+
+                <p className="text-sm text-slate-600">
+                  {item.schedule_type}
+                  {item.room ? ` • ${item.room}` : ''}
+                  {item.assigned_person ? ` • ${item.assigned_person}` : ''}
+                </p>
+
+                {item.notes && (
+                  <p className="text-sm text-slate-600 mt-2">{item.notes}</p>
+                )}
+              </div>
+
+              <Actions
+                onEdit={() => onEdit(item)}
+                onDelete={() => onDelete(item.id)}
+              />
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 
 function Field({ label, children, full = false }: { label: string; children: React.ReactNode; full?: boolean }) {
   return (
