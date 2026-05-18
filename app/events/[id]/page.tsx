@@ -64,14 +64,15 @@ export default function EventDetailPage() {
     notes: '',
   }
 
-  const emptyScheduleForm = {
-    title: '',
-    schedule_type: 'Workshop',
-    start_time: '',
-    end_time: '',
-    room: '',
-    notes: '',
-  }
+const emptyScheduleForm = {
+  title: '',
+  schedule_type: 'Workshop',
+  start_time: '',
+  end_time: '',
+  room: '',
+  assigned_person: '',
+  notes: '',
+}
 
   const emptyProductionForm = {
     name: '',
@@ -266,15 +267,16 @@ export default function EventDetailPage() {
   async function saveScheduleItem(e: React.FormEvent) {
     e.preventDefault()
 
-    const payload = {
-      event_id: eventId,
-      title: scheduleForm.title,
-      schedule_type: scheduleForm.schedule_type,
-      start_time: scheduleForm.start_time || null,
-      end_time: scheduleForm.end_time || null,
-      room: scheduleForm.room,
-      notes: scheduleForm.notes,
-    }
+const payload = {
+  event_id: eventId,
+  title: scheduleForm.title,
+  schedule_type: scheduleForm.schedule_type,
+  start_time: scheduleForm.start_time || null,
+  end_time: scheduleForm.end_time || null,
+  room: scheduleForm.room,
+  assigned_person: scheduleForm.assigned_person,
+  notes: scheduleForm.notes,
+}
 
     if (editingScheduleId) {
       await supabase.from('schedule_items').update(payload).eq('id', editingScheduleId)
@@ -289,14 +291,15 @@ export default function EventDetailPage() {
   }
 
   function editScheduleItem(item: any) {
-    setScheduleForm({
-      title: item.title || '',
-      schedule_type: item.schedule_type || 'Workshop',
-      start_time: item.start_time ? item.start_time.slice(0, 16) : '',
-      end_time: item.end_time ? item.end_time.slice(0, 16) : '',
-      room: item.room || '',
-      notes: item.notes || '',
-    })
+setScheduleForm({
+  title: item.title || '',
+  schedule_type: item.schedule_type || 'Workshop',
+  start_time: item.start_time ? item.start_time.slice(0, 16) : '',
+  end_time: item.end_time ? item.end_time.slice(0, 16) : '',
+  room: item.room || '',
+  assigned_person: item.assigned_person || '',
+  notes: item.notes || '',
+})
 
     setEditingScheduleId(item.id)
     setShowScheduleForm(true)
@@ -663,21 +666,40 @@ export default function EventDetailPage() {
             <Field label="Title"><input className="Input" value={scheduleForm.title} onChange={(e) => setScheduleForm({ ...scheduleForm, title: e.target.value })} required /></Field>
 
             <Field label="Schedule Type">
-              <select className="Input" value={scheduleForm.schedule_type} onChange={(e) => setScheduleForm({ ...scheduleForm, schedule_type: e.target.value })}>
-                <option>Workshop</option>
-                <option>Party</option>
-                <option>Setup</option>
-                <option>Soundcheck</option>
-                <option>Performance</option>
-                <option>Break</option>
-                <option>Doors Open</option>
-                <option>Cleanup</option>
-              </select>
+ <select className="Input" value={scheduleForm.schedule_type} onChange={(e) => setScheduleForm({ ...scheduleForm, schedule_type: e.target.value })}>
+  <option>Workshop</option>
+  <option>Party</option>
+  <option>Setup</option>
+  <option>Soundcheck</option>
+  <option>Performance</option>
+  <option>Break</option>
+  <option>Doors Open</option>
+  <option>Cleanup</option>
+  <option>Volunteer Shift</option>
+  <option>Check-In / Registration</option>
+  <option>Door Staff</option>
+  <option>Setup Crew</option>
+  <option>Breakdown Crew</option>
+  <option>Food / Hospitality</option>
+  <option>Bar Support</option>
+</select>
             </Field>
 
             <Field label="Start Time"><input className="Input" type="datetime-local" value={scheduleForm.start_time} onChange={(e) => setScheduleForm({ ...scheduleForm, start_time: e.target.value })} /></Field>
             <Field label="End Time"><input className="Input" type="datetime-local" value={scheduleForm.end_time} onChange={(e) => setScheduleForm({ ...scheduleForm, end_time: e.target.value })} /></Field>
             <Field label="Room / Floor"><input className="Input" value={scheduleForm.room} onChange={(e) => setScheduleForm({ ...scheduleForm, room: e.target.value })} /></Field>
+<Field label="Assigned Person / Volunteer">
+  <input
+    className="Input"
+    value={scheduleForm.assigned_person}
+    onChange={(e) =>
+      setScheduleForm({
+        ...scheduleForm,
+        assigned_person: e.target.value,
+      })
+    }
+  />
+</Field>
             <Field label="Notes" full><textarea className="Input" value={scheduleForm.notes} onChange={(e) => setScheduleForm({ ...scheduleForm, notes: e.target.value })} /></Field>
 
             <button className="Button md:col-span-2">{editingScheduleId ? 'Save Schedule Changes' : 'Save Schedule Item'}</button>
@@ -690,8 +712,23 @@ export default function EventDetailPage() {
               <div>
                 <p className="text-xs uppercase text-slate-500">{item.schedule_type}</p>
                 <h3 className="text-lg font-bold">{item.title}</h3>
-                <p className="text-sm text-slate-600">{item.start_time} → {item.end_time}</p>
-                <p className="text-sm text-slate-600">{item.room}</p>
+ <p className="text-sm text-slate-600">
+  {item.start_time ? new Date(item.start_time).toLocaleString() : 'No start time'}
+  {' → '}
+  {item.end_time ? new Date(item.end_time).toLocaleString() : 'No end time'}
+</p>
+
+{item.room && (
+  <p className="text-sm text-slate-600">
+    Room/Floor: {item.room}
+  </p>
+)}
+
+{item.assigned_person && (
+  <p className="text-sm text-slate-600">
+    Assigned: {item.assigned_person}
+  </p>
+)}
               </div>
               <Actions onEdit={() => editScheduleItem(item)} onDelete={() => deleteScheduleItem(item.id)} />
             </ItemCard>
