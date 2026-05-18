@@ -659,6 +659,7 @@ function getScheduleColor(type: string) {
 <CollapsibleSectionHeader
   title="Budget"
   subtitle="Track direct financial income and expenses like venue, flights, hotels, artist fees, marketing, and ticket revenue."
+  summary={`${budgetItems.length} items • $${budgetEstimatedExpenses} expenses • $${budgetEstimatedIncome} income`}
   button={showBudgetForm ? 'Cancel' : '+ Add Budget Item'}
   isOpen={openSections.budget}
   onToggle={() => toggleSection('budget')}
@@ -1262,6 +1263,7 @@ function SectionHeader({ title, subtitle, button, onClick }: { title: string; su
 function CollapsibleSectionHeader({
   title,
   subtitle,
+  summary,
   button,
   isOpen,
   onToggle,
@@ -1269,6 +1271,7 @@ function CollapsibleSectionHeader({
 }: {
   title: string
   subtitle: string
+  summary?: string
   button: string
   isOpen: boolean
   onToggle: () => void
@@ -1277,19 +1280,21 @@ function CollapsibleSectionHeader({
   return (
     <section className="bg-white rounded-3xl border border-slate-200 p-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <button
-          type="button"
-          onClick={onToggle}
-          className="text-left flex-1"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold">
+        <button type="button" onClick={onToggle} className="text-left flex-1">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl font-bold leading-none mt-1">
               {isOpen ? '−' : '+'}
             </span>
 
             <div>
               <h2 className="text-3xl font-bold">{title}</h2>
               <p className="text-slate-600 mt-1">{subtitle}</p>
+
+              {!isOpen && summary && (
+                <p className="text-sm font-semibold text-amber-700 mt-3">
+                  {summary}
+                </p>
+              )}
             </div>
           </div>
         </button>
