@@ -1098,8 +1098,7 @@ getScheduleColor={getScheduleColor}
     </CardList>
   </div>
 )}
-
-
+      </div>
 
       <style jsx global>{`
         .Input {
