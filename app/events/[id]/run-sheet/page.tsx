@@ -158,7 +158,7 @@ export default function RunSheetPage() {
           <p className="text-slate-500">No schedule items added yet.</p>
         ) : (
           <div className="space-y-10">
-{Object.entries(groupedSchedule).map(([day, items]: [string, any[]]) => (
+{(Object.entries(groupedSchedule) as [string, any[]][]).map(([day, items]) => (
               <section key={day}>
                 <h2 className="text-3xl font-bold bg-slate-950 text-white rounded-2xl px-5 py-3 mb-5">
                   {day}
