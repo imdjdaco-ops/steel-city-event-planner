@@ -727,16 +727,23 @@ function getScheduleColor(type: string) {
   </div>
 )}
 
-        <SectionHeader
-          title="Tasks"
-          subtitle="Production checklist for this event."
-          button={showTaskForm ? 'Cancel' : '+ Add Task'}
-          onClick={() => {
-            setShowTaskForm(!showTaskForm)
-            setEditingTaskId(null)
-            setTaskForm(emptyTaskForm)
-          }}
-        />
+<CollapsibleSectionHeader
+  title="Tasks"
+  subtitle="Track production, planning, marketing, and operational tasks for this event."
+  summary={`${tasks.length} tasks • ${openTasks} open • ${taskProgress}% complete`}
+  button={showTaskForm ? 'Cancel' : '+ Add Task'}
+  isOpen={openSections.tasks}
+  onToggle={() => toggleSection('tasks')}
+  onButtonClick={() => {
+    setShowTaskForm(!showTaskForm)
+    setEditingTaskId(null)
+    setTaskForm(emptyTaskForm)
+  }}
+/>
+
+{openSections.tasks && (
+  <div className="space-y-6">
+
 
         {showTaskForm && (
           <form onSubmit={saveTask} className="FormGrid">
@@ -791,17 +798,27 @@ function getScheduleColor(type: string) {
           ))}
           {tasks.length === 0 && <p className="text-slate-500">No tasks yet.</p>}
         </CardList>
+  </div>
+)}
 
-        <SectionHeader
-          title="Schedule Builder"
-          subtitle="Build the run-of-show, workshops, setup, and room timeline."
-          button={showScheduleForm ? 'Cancel' : '+ Add Schedule Item'}
-          onClick={() => {
-            setShowScheduleForm(!showScheduleForm)
-            setEditingScheduleId(null)
-            setScheduleForm(emptyScheduleForm)
-          }}
-        />
+<CollapsibleSectionHeader
+  title="Schedule"
+  subtitle="Build the event timeline, workshops, performances, volunteer shifts, and production schedule."
+  summary={`${scheduleItems.length} items • ${assignedScheduleItems} assigned • ${volunteerScheduleItems} volunteer shifts`}
+  button={showScheduleForm ? 'Cancel' : '+ Add Schedule Item'}
+  isOpen={openSections.schedule}
+  onToggle={() => toggleSection('schedule')}
+  onButtonClick={() => {
+    setShowScheduleForm(!showScheduleForm)
+    setEditingScheduleId(null)
+    setScheduleForm(emptyScheduleForm)
+  }}
+/>
+
+{openSections.tasks && (
+  <div className="space-y-6">
+    {/* task form + task cards go here */}
+
 
         {showScheduleForm && (
           <form onSubmit={saveScheduleItem} className="FormGrid">
@@ -944,19 +961,25 @@ getScheduleColor={getScheduleColor}
     />
   )}
 </section>
+  </div>
+)}
 
-        <SectionHeader
-          title="Production Items"
-          subtitle="Track sound, DJ gear, mics, lighting, rentals, ownership, and costs."
-          button={showProductionForm ? 'Cancel' : '+ Add Production Item'}
-          onClick={() => {
-            setShowProductionForm(!showProductionForm)
-            setEditingProductionId(null)
-            setProductionForm(emptyProductionForm)
-          }}
-        />
+<CollapsibleSectionHeader
+  title="Production Items"
+  subtitle="Track sound, lighting, DJ equipment, rentals, and technical production needs."
+  summary={`${productionItems.length} items • $${productionEstimated} estimated`}
+  button={showProductionForm ? 'Cancel' : '+ Add Production Item'}
+  isOpen={openSections.production}
+  onToggle={() => toggleSection('production')}
+  onButtonClick={() => {
+    setShowProductionForm(!showProductionForm)
+    setEditingProductionId(null)
+    setProductionForm(emptyProductionForm)
+  }}
+/>
 
-        {showProductionForm && (
+{openSections.production && (
+  <div className="space-y-6">
           <form onSubmit={saveProductionItem} className="FormGrid">
             <Field label="Item Name"><input className="Input" value={productionForm.name} onChange={(e) => setProductionForm({ ...productionForm, name: e.target.value })} required /></Field>
             <Field label="Category"><input className="Input" value={productionForm.category} onChange={(e) => setProductionForm({ ...productionForm, category: e.target.value })} /></Field>
@@ -1013,18 +1036,26 @@ getScheduleColor={getScheduleColor}
           ))}
         </CardList>
 
-        <SectionHeader
-          title="Vendors / Services"
-          subtitle="Track food, cash bar, rentals, photo/video, security, and outside services."
-          button={showServiceForm ? 'Cancel' : '+ Add Vendor / Service'}
-          onClick={() => {
-            setShowServiceForm(!showServiceForm)
-            setEditingServiceId(null)
-            setServiceForm(emptyServiceForm)
-          }}
-        />
+  </div>
+)}
 
-        {showServiceForm && (
+
+<CollapsibleSectionHeader
+  title="Vendors & Services"
+  subtitle="Manage external vendors, food, bar service, photography, security, and other contracted services."
+  summary={`${services.length} services • $${servicesEstimated} estimated`}
+  button={showServiceForm ? 'Cancel' : '+ Add Service'}
+  isOpen={openSections.vendors}
+  onToggle={() => toggleSection('vendors')}
+  onButtonClick={() => {
+    setShowServiceForm(!showServiceForm)
+    setEditingServiceId(null)
+    setServiceForm(emptyServiceForm)
+  }}
+/>
+
+{openSections.vendors && (
+  <div className="space-y-6">
           <form onSubmit={saveService} className="FormGrid">
             <Field label="Service / Vendor Name"><input className="Input" value={serviceForm.name} onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} required /></Field>
             <Field label="Service Type"><input className="Input" value={serviceForm.service_type} onChange={(e) => setServiceForm({ ...serviceForm, service_type: e.target.value })} /></Field>
@@ -1063,6 +1094,8 @@ getScheduleColor={getScheduleColor}
             </ItemCard>
           ))}
         </CardList>
+  </div>
+)}
       </div>
 
       <style jsx global>{`
