@@ -510,9 +510,18 @@ function groupScheduleByStaff(items: any[]) {
   <div className="flex-1 p-8">
 
       <div className="max-w-6xl mx-auto space-y-8">
-        <Link href="/" className="text-slate-600 hover:text-slate-950">
-          ← Back to dashboard
-        </Link>
+<div className="flex flex-wrap gap-4 items-center">
+  <Link href="/" className="text-slate-600 hover:text-slate-950">
+    ← Back to dashboard
+  </Link>
+
+  <Link
+    href={`/events/${eventId}/run-sheet`}
+    className="bg-slate-950 text-white rounded-2xl px-4 py-2 font-semibold hover:bg-slate-800"
+  >
+    Event-Day Run Sheet
+  </Link>
+</div>
 
         <section className="bg-slate-950 text-white rounded-3xl p-8">
           <div className="flex justify-between gap-4">
