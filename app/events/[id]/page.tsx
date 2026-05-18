@@ -440,6 +440,23 @@ setScheduleForm({
   const completedTasks = tasks.filter((task) => task.status === 'Done').length
   const taskProgress = tasks.length ? Math.round((completedTasks / tasks.length) * 100) : 0
 
+const openTasks = tasks.filter((task) => task.status !== 'Done').length
+
+const assignedScheduleItems = scheduleItems.filter(
+  (item) => item.assigned_person
+).length
+
+const volunteerScheduleItems = scheduleItems.filter((item) => {
+  const type = item.schedule_type?.toLowerCase() || ''
+  return (
+    type.includes('volunteer') ||
+    type.includes('staff') ||
+    type.includes('registration') ||
+    type.includes('door') ||
+    type.includes('crew')
+  )
+}).length
+
 function getDayLabel(dateString: string) {
   if (!dateString) return 'No Date'
 
@@ -498,6 +515,33 @@ function groupScheduleByStaff(items: any[]) {
     return groups
   }, {} as Record<string, any[]>)
 }
+
+function getScheduleColor(type: string) {
+  const normalized = type?.toLowerCase() || ''
+
+  if (normalized.includes('workshop')) {
+    return 'border-blue-400 bg-blue-50 text-blue-800'
+  }
+
+  if (normalized.includes('party')) {
+    return 'border-purple-400 bg-purple-50 text-purple-800'
+  }
+
+  if (normalized.includes('volunteer') || normalized.includes('staff') || normalized.includes('registration') || normalized.includes('door')) {
+    return 'border-amber-400 bg-amber-50 text-amber-800'
+  }
+
+  if (normalized.includes('setup') || normalized.includes('soundcheck') || normalized.includes('cleanup') || normalized.includes('breakdown')) {
+    return 'border-slate-400 bg-slate-50 text-slate-800'
+  }
+
+  if (normalized.includes('performance')) {
+    return 'border-pink-400 bg-pink-50 text-pink-800'
+  }
+
+  return 'border-slate-300 bg-white text-slate-800'
+}
+
 
   if (checkingAuth) return <main className="min-h-screen bg-slate-100 p-8 text-slate-950">Checking access...</main>
   if (loading) return <main className="min-h-screen bg-slate-100 p-8">Loading...</main>
@@ -562,12 +606,16 @@ function groupScheduleByStaff(items: any[]) {
           </form>
         )}
 
-        <section className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          <Stat label="Attendance Goal" value={event.attendance_goal} />
-          <Stat label="Revenue Goal" value={`$${event.revenue_goal}`} />
-          <Stat label="Total Estimated Costs" value={`$${totalEstimatedCosts}`} />
-          <Stat label="Task Progress" value={`${taskProgress}%`} />
-        </section>
+<section className="grid grid-cols-1 md:grid-cols-4 gap-5">
+  <Stat label="Attendance Goal" value={event.attendance_goal} />
+  <Stat label="Total Estimated Costs" value={`$${totalEstimatedCosts}`} />
+  <Stat label="Break-Even" value={`${breakEvenAttendees} attendees`} />
+  <Stat label="Open Tasks" value={openTasks} />
+  <Stat label="Task Progress" value={`${taskProgress}%`} />
+  <Stat label="Schedule Items" value={scheduleItems.length} />
+  <Stat label="Assigned Schedule Items" value={assignedScheduleItems} />
+  <Stat label="Volunteer Shifts" value={volunteerScheduleItems} />
+</section>
 
         <section className="bg-amber-50 border border-amber-200 rounded-3xl p-6 space-y-5">
           <div>
@@ -828,13 +876,14 @@ function groupScheduleByStaff(items: any[]) {
   {scheduleView === 'timeline' && (
     <div className="space-y-4">
       {scheduleItems.map((item) => (
-        <ScheduleTimelineItem
-          key={item.id}
-          item={item}
-          getTimeLabel={getTimeLabel}
-          onEdit={() => editScheduleItem(item)}
-          onDelete={() => deleteScheduleItem(item.id)}
-        />
+<ScheduleTimelineItem
+  key={item.id}
+  item={item}
+  getTimeLabel={getTimeLabel}
+  getScheduleColor={getScheduleColor}
+  onEdit={() => editScheduleItem(item)}
+  onDelete={() => deleteScheduleItem(item.id)}
+/>
       ))}
     </div>
   )}
@@ -843,6 +892,7 @@ function groupScheduleByStaff(items: any[]) {
     <GroupedScheduleView
       groups={groupScheduleByDay(scheduleItems)}
       getTimeLabel={getTimeLabel}
+getScheduleColor={getScheduleColor}
       onEdit={editScheduleItem}
       onDelete={deleteScheduleItem}
     />
@@ -852,6 +902,7 @@ function groupScheduleByStaff(items: any[]) {
     <GroupedScheduleView
       groups={groupScheduleByRoom(scheduleItems)}
       getTimeLabel={getTimeLabel}
+getScheduleColor={getScheduleColor}
       onEdit={editScheduleItem}
       onDelete={deleteScheduleItem}
     />
@@ -861,6 +912,7 @@ function groupScheduleByStaff(items: any[]) {
     <GroupedScheduleView
       groups={groupScheduleByStaff(scheduleItems)}
       getTimeLabel={getTimeLabel}
+getScheduleColor={getScheduleColor}
       onEdit={editScheduleItem}
       onDelete={deleteScheduleItem}
     />
@@ -1028,16 +1080,18 @@ function groupScheduleByStaff(items: any[]) {
 function ScheduleTimelineItem({
   item,
   getTimeLabel,
+  getScheduleColor,
   onEdit,
   onDelete,
 }: {
   item: any
   getTimeLabel: (dateString: string) => string
+  getScheduleColor: (type: string) => string
   onEdit: () => void
   onDelete: () => void
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-4 border-l-4 border-amber-400 bg-slate-50 rounded-2xl p-5">
+<div className={`grid grid-cols-1 md:grid-cols-[160px_1fr] gap-4 border-l-4 rounded-2xl p-5 ${getScheduleColor(item.schedule_type)}`}>
       <div>
         <p className="text-xl font-bold text-slate-950">
           {getTimeLabel(item.start_time)}
@@ -1082,11 +1136,13 @@ function ScheduleTimelineItem({
 function GroupedScheduleView({
   groups,
   getTimeLabel,
+  getScheduleColor,
   onEdit,
   onDelete,
 }: {
   groups: Record<string, any[]>
   getTimeLabel: (dateString: string) => string
+  getScheduleColor: (type: string) => string
   onEdit: (item: any) => void
   onDelete: (id: string) => void
 }) {
@@ -1101,7 +1157,7 @@ function GroupedScheduleView({
           {items.map((item) => (
             <div
               key={item.id}
-              className="bg-slate-50 rounded-2xl border border-slate-200 p-5 flex justify-between gap-4"
+              className={`rounded-2xl border p-5 flex justify-between gap-4 ${getScheduleColor(item.schedule_type)}`}
             >
               <div>
                 <p className="text-sm font-semibold text-slate-500">
