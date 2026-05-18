@@ -443,7 +443,13 @@ setScheduleForm({
 function getDayLabel(dateString: string) {
   if (!dateString) return 'No Date'
 
-  return new Date(dateString).toLocaleDateString([], {
+  const datePart = dateString.split('T')[0]
+
+  if (!datePart) return 'No Date'
+
+  const [year, month, day] = datePart.split('-').map(Number)
+
+  return new Date(year, month - 1, day).toLocaleDateString([], {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
@@ -453,10 +459,17 @@ function getDayLabel(dateString: string) {
 function getTimeLabel(dateString: string) {
   if (!dateString) return 'No time'
 
-  return new Date(dateString).toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-  })
+  const timePart = dateString.split('T')[1]?.slice(0, 5)
+
+  if (!timePart) return 'No time'
+
+  const [hourString, minute] = timePart.split(':')
+  const hour = Number(hourString)
+
+  const period = hour >= 12 ? 'PM' : 'AM'
+  const displayHour = hour % 12 || 12
+
+  return `${displayHour}:${minute} ${period}`
 }
 
 function groupScheduleByDay(items: any[]) {
